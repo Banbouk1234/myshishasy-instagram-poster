@@ -1,0 +1,40 @@
+name: Post Instagram Story
+on:
+  schedule:
+    - cron: '0 6 * * *'
+    - cron: '0 16 * * *'
+  workflow_dispatch:
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: pip install requests
+      - name: Run post script
+        run: python post_story.py
+        env:
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          APP_ID:       ${{ secrets.APP_ID }}
+          APP_SECRET:   ${{ secrets.APP_SECRET }}
+          IG_USER_ID:   ${{ secrets.IG_USER_ID }}
+      - name: Show log
+        if: always()
+        run: |
+          echo "=== post.log ==="
+          cat post.log 2>/dev/null || echo "(no post.log found)"
+          echo "=== .posted.json ==="
+          cat .posted.json 2>/dev/null || echo "(no .posted.json found)"
+          echo "=== files in dir ==="
+          ls -la | head -20
+      - name: Save posted tracker
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions Bot"
+          git add .posted.json post.log 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "Update post tracker [skip ci]"
+          git push || true
