@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zahi Attendance</title>
+<style>
+  :root {
+    --green: #16a34a;
+    --green-dark: #15803d;
+    --red: #dc2626;
+    --red-dark: #b91c1c;
+    --ink: #1f2430;
+    --muted: #6b7280;
+    --line: #e6e8ee;
+    --card: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(160deg, #4f46e5 0%, #7c3aed 55%, #9333ea 100%);
+    min-height: 100vh;
+    color: var(--ink);
+    display: flex;
+    justify-content: center;
+    padding: 20px 14px 60px;
+  }
+  .wrap { width: 100%; max-width: 460px; }
+
+  .card {
+    background: var(--card);
+    border-radius: 22px;
+    box-shadow: 0 18px 45px rgba(20, 10, 60, 0.28);
+    padding: 26px 22px 24px;
+  }
+
+  h1 {
+    margin: 0 0 2px;
+    font-size: 26px;
+    letter-spacing: -0.3px;
+    text-align: center;
+  }
+  .today {
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+
+  .status-box {
+    text-align: center;
+    padding: 22px 16px;
+    border-radius: 18px;
+    background: #f5f6fa;
+    border: 1px solid var(--line);
+    margin-bottom: 20px;
+  }
+  .status-pill {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 999px;
+    margin-bottom: 12px;
+  }
+  .pill-out  { background: #fee2e2; color: var(--red-dark); }
+  .pill-in   { background: #dcfce7; color: var(--green-dark); }
+  .pill-wait { background: #e0e7ff; color: #4338ca; }
+  .pill-done { background: #ede9fe; color: #6d28d9; }
+
+  .timer {
+    font-size: 40px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.05;
+  }
+  .timer small { font-size: 18px; font-weight: 700; }
+  .timer-label {
+    color: var(--muted);
+    font-size: 14px;
+    margin-top: 6px;
+  }
+  .times-line {
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .times-line b { color: var(--ink); font-weight: 700; }
+
+  .btns { display: flex; gap: 12px; }
+  button.action {
+    flex: 1;
+    border: 0;
+    border-radius: 16px;
+    padding: 18px 10px;
+    font-size: 18px;
+    font-weight: 800;
+    color: #fff;
+    cursor: pointer;
+    transition: transform .05s ease, filter .15s ease;
+  }
+  button.action:active { transform: translateY(2px); }
+  button.enter { background: var(--green); box-shadow: 0 8px 18px rgba(22,163,74,.35); }
+  button.leave { background: var(--red);   box-shadow: 0 8px 18px rgba(220,38,38,.35); }
+  button.action:disabled {
+    background: #d1d5db;
+    color: #f3f4f6;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  .undo {
+    text-align: center;
+    margin-top: 12px;
+    min-height: 18px;
+  }
+  .undo a { color: var(--muted); font-size: 13px; text-decoration: underline; cursor: pointer; }
+
+  .history-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 26px 4px 10px;
+  }
+  .history-head h2 { margin: 0; font-size: 17px; }
+  .history-head .count { color: var(--muted); font-size: 13px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  thead th {
+    text-align: left;
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    padding: 8px 8px;
+    border-bottom: 2px solid var(--line);
+  }
+  tbody td { padding: 10px 8px; border-bottom: 1px solid var(--line); }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.total { font-weight: 700; }
+  .tag-here { color: var(--green-dark); font-weight: 700; font-size: 12px; }
+  .tag-open { color: #c2410c; font-weight: 700; font-size: 12px; }
+  .empty { text-align: center; color: var(--muted); padding: 22px 0; font-size: 14px; }
+
+  .footer-btns {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+    justify-content: center;
+  }
+  button.mini {
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--muted);
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button.mini:hover { background: #f9fafb; color: var(--ink); }
+
+  .note {
+    text-align: center;
+    color: rgba(255,255,255,.85);
+    font-size: 12px;
+    margin-top: 16px;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>🪑 Zahi's Attendance</h1>
+      <div class="today" id="todayDate">—</div>
+
+      <div class="status-box">
+        <span class="status-pill" id="statusPill">—</span>
+        <div class="timer" id="timer">—</div>
+        <div class="timer-label" id="timerLabel">&nbsp;</div>
+        <div class="times-line" id="timesLine">&nbsp;</div>
+      </div>
+
+      <div class="btns">
+        <button class="action enter" id="enterBtn">Entered</button>
+        <button class="action leave" id="leaveBtn">Left</button>
+      </div>
+      <div class="undo" id="undoWrap"></div>
+
+      <div class="history-head">
+        <h2>History</h2>
+        <span class="count" id="histCount"></span>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Date</th><th>Entered</th><th>Left</th><th>Total</th></tr>
+        </thead>
+        <tbody id="histBody"></tbody>
+      </table>
+
+      <div class="footer-btns">
+        <button class="mini" id="exportBtn">Export CSV</button>
+        <button class="mini" id="clearBtn">Clear all</button>
+      </div>
+    </div>
+    <div class="note">Saved on this device only · Works offline · Zahi is expected daily at 9:00 PM</div>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+
+  var STORAGE_KEY = "zahi_attendance_v1";
+  var ARRIVAL_HOUR = 21;   // 9 PM
+  var ARRIVAL_MIN  = 0;
+
+  // ---------- storage ----------
+  function loadRecords() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      var arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) { return []; }
+  }
+  function saveRecords(arr) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+    catch (e) { alert("Could not save — this browser may be blocking storage."); }
+  }
+
+  // ---------- date/time helpers ----------
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function dayKey(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function todayKey() { return dayKey(new Date()); }
+
+  function fmtClock(iso) {
+    if (!iso) return "—";
+    var d = new Date(iso);
+    var h = d.getHours(), m = d.getMinutes();
+    var ap = h >= 12 ? "PM" : "AM";
+    var h12 = h % 12; if (h12 === 0) h12 = 12;
+    return h12 + ":" + pad(m) + " " + ap;
+  }
+  function fmtNiceDate(key) {
+    var parts = key.split("-");
+    var d = new Date(parseInt(parts[0],10), parseInt(parts[1],10)-1, parseInt(parts[2],10));
+    var days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    var mons = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return days[d.getDay()] + ", " + mons[d.getMonth()] + " " + d.getDate();
+  }
+  function fmtDuration(ms) {
+    if (ms < 0) ms = 0;
+    var totalMin = Math.floor(ms / 60000);
+    var h = Math.floor(totalMin / 60);
+    var m = totalMin % 60;
+    if (h > 0) return h + "h " + pad(m) + "m";
+    return m + "m";
+  }
+  function fmtCountdown(ms) {
+    var totalMin = Math.floor(ms / 60000);
+    var h = Math.floor(totalMin / 60);
+    var m = totalMin % 60;
+    if (h > 0) return { big: h + "h " + pad(m) + "m", };
+    return { big: m + " min" };
+  }
+
+  function getTodayRecord() {
+    var recs = loadRecords();
+    var tk = todayKey();
+    for (var i = 0; i < recs.length; i++) if (recs[i].date === tk) return recs[i];
+    return null;
+  }
+
+  // ---------- elements ----------
+  var el = {
+    todayDate: document.getElementById("todayDate"),
+    statusPill: document.getElementById("statusPill"),
+    timer: document.getElementById("timer"),
+    timerLabel: document.getElementById("timerLabel"),
+    timesLine: document.getElementById("timesLine"),
+    enterBtn: document.getElementById("enterBtn"),
+    leaveBtn: document.getElementById("leaveBtn"),
+    undoWrap: document.getElementById("undoWrap"),
+    histBody: document.getElementById("histBody"),
+    histCount: document.getElementById("histCount"),
+    exportBtn: document.getElementById("exportBtn"),
+    clearBtn: document.getElementById("clearBtn")
+  };
+
+  // ---------- actions ----------
+  function markEntered() {
+    var recs = loadRecords();
+    var tk = todayKey();
+    for (var i = 0; i < recs.length; i++) {
+      if (recs[i].date === tk) { renderAll(); return; } // already entered today
+    }
+    recs.push({ date: tk, enteredAt: new Date().toISOString(), leftAt: null });
+    saveRecords(recs);
+    renderAll();
+  }
+
+  function markLeft() {
+    var recs = loadRecords();
+    var tk = todayKey();
+    for (var i = 0; i < recs.length; i++) {
+      if (recs[i].date === tk && recs[i].enteredAt && !recs[i].leftAt) {
+        recs[i].leftAt = new Date().toISOString();
+        saveRecords(recs);
+        break;
+      }
+    }
+    renderAll();
+  }
+
+  function undoToday() {
+    var recs = loadRecords();
+    var tk = todayKey();
+    var out = [];
+    for (var i = 0; i < recs.length; i++) if (recs[i].date !== tk) out.push(recs[i]);
+    saveRecords(out);
+    renderAll();
+  }
+
+  function reopenToday() {
+    // If Left was pressed by mistake, clear the leftAt so he's "in" again.
+    var recs = loadRecords();
+    var tk = todayKey();
+    for (var i = 0; i < recs.length; i++) {
+      if (recs[i].date === tk) { recs[i].leftAt = null; break; }
+    }
+    saveRecords(recs);
+    renderAll();
+  }
+
+  // ---------- render ----------
+  function renderStatus() {
+    var now = new Date();
+    var rec = getTodayRecord();
+
+    // Buttons + undo
+    el.undoWrap.innerHTML = "";
+    if (!rec) {
+      el.enterBtn.disabled = false;
+      el.leaveBtn.disabled = true;
+    } else if (rec.enteredAt && !rec.leftAt) {
+      el.enterBtn.disabled = true;
+      el.leaveBtn.disabled = false;
+      addUndoLink("Undo entry", undoToday);
+    } else { // done today
+      el.enterBtn.disabled = true;
+      el.leaveBtn.disabled = true;
+      addUndoLink("Zahi came back? Re-open today", reopenToday);
+    }
+
+    // Status box
+    if (rec && rec.enteredAt && !rec.leftAt) {
+      // IN — count up since entered
+      setPill("pill-in", "Zahi is IN");
+      var elapsed = now - new Date(rec.enteredAt);
+      el.timer.textContent = fmtDuration(elapsed);
+      el.timerLabel.textContent = "here so far today";
+      el.timesLine.innerHTML = "Entered at <b>" + fmtClock(rec.enteredAt) + "</b>";
+    } else if (rec && rec.enteredAt && rec.leftAt) {
+      // DONE for today
+      setPill("pill-done", "Done for today");
+      var dur = new Date(rec.leftAt) - new Date(rec.enteredAt);
+      el.timer.textContent = fmtDuration(dur);
+      el.timerLabel.textContent = "total time today";
+      el.timesLine.innerHTML = "<b>" + fmtClock(rec.enteredAt) + "</b> → <b>" + fmtClock(rec.leftAt) + "</b>";
+    } else {
+      // Not arrived yet — countdown to 9 PM
+      var target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), ARRIVAL_HOUR, ARRIVAL_MIN, 0, 0);
+      var diff = target - now;
+      if (diff > 0) {
+        setPill("pill-wait", "Waiting for Zahi");
+        var c = fmtCountdown(diff);
+        el.timer.textContent = c.big;
+        el.timerLabel.textContent = "until 9:00 PM";
+        el.timesLine.innerHTML = "Press <b>Entered</b> when he arrives";
+      } else {
+        setPill("pill-out", "Not here yet");
+        var late = now - target;
+        el.timer.textContent = fmtDuration(late);
+        el.timerLabel.textContent = "past 9:00 PM";
+        el.timesLine.innerHTML = "Press <b>Entered</b> when he arrives";
+      }
+    }
+  }
+
+  function addUndoLink(text, fn) {
+    var a = document.createElement("a");
+    a.textContent = text;
+    a.onclick = fn;
+    el.undoWrap.appendChild(a);
+  }
+  function setPill(cls, text) {
+    el.statusPill.className = "status-pill " + cls;
+    el.statusPill.textContent = text;
+  }
+
+  function renderHistory() {
+    var recs = loadRecords().slice();
+    recs.sort(function (a, b) { return a.date < b.date ? 1 : (a.date > b.date ? -1 : 0); });
+
+    el.histCount.textContent = recs.length ? (recs.length + (recs.length === 1 ? " day" : " days")) : "";
+    el.histBody.innerHTML = "";
+
+    if (!recs.length) {
+      var tr = document.createElement("tr");
+      var td = document.createElement("td");
+      td.colSpan = 4; td.className = "empty";
+      td.textContent = "No visits logged yet.";
+      tr.appendChild(td); el.histBody.appendChild(tr);
+      return;
+    }
+
+    var tk = todayKey();
+    for (var i = 0; i < recs.length; i++) {
+      var r = recs[i];
+      var tr = document.createElement("tr");
+
+      var totalCell, leftCell;
+      if (r.leftAt) {
+        leftCell = fmtClock(r.leftAt);
+        totalCell = fmtDuration(new Date(r.leftAt) - new Date(r.enteredAt));
+      } else if (r.date === tk) {
+        leftCell = '<span class="tag-here">still here</span>';
+        totalCell = fmtDuration(new Date() - new Date(r.enteredAt));
+      } else {
+        leftCell = '<span class="tag-open">no exit</span>';
+        totalCell = "—";
+      }
+
+      tr.innerHTML =
+        "<td>" + fmtNiceDate(r.date) + "</td>" +
+        "<td>" + fmtClock(r.enteredAt) + "</td>" +
+        "<td>" + leftCell + "</td>" +
+        '<td class="total">' + totalCell + "</td>";
+      el.histBody.appendChild(tr);
+    }
+  }
+
+  function renderAll() { renderStatus(); renderHistory(); el.todayDate.textContent = fmtNiceDate(todayKey()); }
+
+  // ---------- export / clear ----------
+  function exportCSV() {
+    var recs = loadRecords().slice();
+    recs.sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+    var rows = [["Date","Entered","Left","Total"]];
+    for (var i = 0; i < recs.length; i++) {
+      var r = recs[i];
+      var total = r.leftAt ? fmtDuration(new Date(r.leftAt) - new Date(r.enteredAt)) : "";
+      rows.push([r.date, fmtClock(r.enteredAt), r.leftAt ? fmtClock(r.leftAt) : "", total]);
+    }
+    var csv = rows.map(function (row) {
+      return row.map(function (c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(",");
+    }).join("\n");
+
+    var blob = new Blob([csv], { type: "text/csv" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = "zahi-attendance.csv";
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  }
+
+  function clearAll() {
+    if (confirm("Delete ALL attendance history? This cannot be undone.")) {
+      localStorage.removeItem(STORAGE_KEY);
+      renderAll();
+    }
+  }
+
+  // ---------- wire up ----------
+  el.enterBtn.addEventListener("click", markEntered);
+  el.leaveBtn.addEventListener("click", markLeft);
+  el.exportBtn.addEventListener("click", exportCSV);
+  el.clearBtn.addEventListener("click", clearAll);
+
+  renderAll();
+  setInterval(renderStatus, 1000); // live countdown / count-up
+})();
+</script>
+</body>
+</html>
