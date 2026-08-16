@@ -183,6 +183,34 @@
   }
   button.mini:hover { background: var(--surface); color: var(--ink); }
 
+  .reminder-banner {
+    display: flex; align-items: center; gap: 10px; justify-content: space-between;
+    background: linear-gradient(90deg, rgba(245,158,11,.22), rgba(251,146,60,.10));
+    border: 1px solid rgba(245,158,11,.55);
+    color: #ffe9c7; border-radius: 14px;
+    padding: 11px 8px 11px 14px; margin-bottom: 16px;
+    font-size: 13.5px; line-height: 1.35;
+  }
+  .reminder-banner b { color: #fff; }
+  .reminder-banner button {
+    border: 0; background: transparent; color: #ffd9a8;
+    font-size: 22px; line-height: 1; cursor: pointer; padding: 0 8px; flex: none;
+  }
+  .reminder-banner button:hover { color: #fff; }
+
+  .avatar-wrap { display: flex; justify-content: center; margin-bottom: 12px; }
+  .avatar {
+    width: 86px; height: 86px; border-radius: 50%;
+    background: radial-gradient(circle at 50% 34%, #3c3122, #241d16);
+    border: 2px solid var(--ember);
+    box-shadow: 0 0 0 4px rgba(245,158,11,.12), 0 10px 24px rgba(0,0,0,.5);
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: 36px; font-weight: 600; color: var(--ember-hi);
+    user-select: none;
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
   .note {
     text-align: center; color: var(--muted); font-size: 12px;
     margin-top: 16px; line-height: 1.6;
@@ -192,6 +220,14 @@
 <body>
   <div class="wrap">
     <div class="card">
+      <div class="reminder-banner" id="reminderBanner" hidden>
+        <span>&#9200; <b>Get ready &mdash; don&rsquo;t be late!</b> Zahi is due at 9:00&nbsp;PM.</span>
+        <button id="dismissReminder" type="button" aria-label="Dismiss reminder">&times;</button>
+      </div>
+
+      <div class="avatar-wrap">
+        <div class="avatar" id="avatar">Z</div>
+      </div>
       <h1>Zahi&rsquo;s Attendance</h1>
       <div class="today" id="todayDate">&mdash;</div>
 
@@ -220,11 +256,12 @@
       </table>
 
       <div class="footer-btns">
+        <button class="mini" id="reminderBtn">&#128276; Enable alert</button>
         <button class="mini" id="exportBtn">Export CSV</button>
         <button class="mini" id="clearBtn">Clear all</button>
       </div>
     </div>
-    <div class="note">Saved on this device only &middot; Works offline &middot; Zahi is expected daily at 9:00&nbsp;PM</div>
+    <div class="note">Saved on this device only &middot; Works offline &middot; Reminder at 8:30&nbsp;PM while this page is open</div>
   </div>
 
 <script>
@@ -234,6 +271,14 @@
   var STORAGE_KEY = "zahi_attendance_v1";
   var ARRIVAL_HOUR = 21;   // 9 PM
   var ARRIVAL_MIN  = 0;
+
+  // Photo of Zahi — paste a data URI ("data:image/jpeg;base64,....") between
+  // the quotes and he appears at the top. Leave empty to show his initial.
+  var AVATAR_SRC = "";
+
+  // Reminder: alert this many minutes before 9 PM ("get ready, don't be late").
+  var REMIND_BEFORE_MIN = 30;
+  var REMINDER_KEY = "zahi_reminder_shown"; // remembers we already pinged today
 
   // ---------- storage ----------
   function loadRecords() {
@@ -517,14 +562,106 @@
     }
   }
 
+  // ---------- avatar + reminder ----------
+  function renderAvatar() {
+    if (!AVATAR_SRC) return;
+    document.getElementById("avatar").innerHTML =
+      '<img src="' + AVATAR_SRC + '" alt="Zahi" />';
+  }
+
+  function targetToday() {
+    var n = new Date();
+    return new Date(n.getFullYear(), n.getMonth(), n.getDate(), ARRIVAL_HOUR, ARRIVAL_MIN, 0, 0);
+  }
+
+  var reminderDismissed = false;
+  function showBanner() { document.getElementById("reminderBanner").hidden = false; }
+  function hideBanner() { document.getElementById("reminderBanner").hidden = true; }
+
+  function beep() {
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      var ctx = new AC();
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = "sine"; o.frequency.value = 880;
+      o.connect(g); g.connect(ctx.destination);
+      g.gain.setValueAtTime(0.0001, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.22, ctx.currentTime + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.55);
+      o.start(); o.stop(ctx.currentTime + 0.6);
+    } catch (e) {}
+  }
+
+  function notifyAndBeep() {
+    if ("Notification" in window && Notification.permission === "granted") {
+      try {
+        new Notification("Get ready — don't be late! ⏰", {
+          body: "Zahi is due at 9:00 PM, in " + REMIND_BEFORE_MIN + " minutes.",
+          tag: "zahi-reminder"
+        });
+      } catch (e) {}
+    }
+    beep();
+  }
+
+  // Runs every second. Fires once when the 8:30–9:00 window opens (if Zahi
+  // isn't already here), and keeps the on-screen banner up until dismissed.
+  function checkReminder() {
+    var now = new Date();
+    var target = targetToday();
+    var remindAt = new Date(target.getTime() - REMIND_BEFORE_MIN * 60000);
+    var rec = getTodayRecord();
+    var inWindow = now >= remindAt && now < target && !(rec && rec.enteredAt);
+
+    if (!inWindow) { reminderDismissed = false; hideBanner(); return; }
+
+    if (localStorage.getItem(REMINDER_KEY) !== todayKey()) {
+      localStorage.setItem(REMINDER_KEY, todayKey());
+      notifyAndBeep();
+    }
+    if (!reminderDismissed) showBanner();
+  }
+
+  function updateReminderBtn() {
+    var btn = document.getElementById("reminderBtn");
+    if (!("Notification" in window)) { btn.textContent = "🔔 On-screen only"; return; }
+    if (Notification.permission === "granted") btn.textContent = "🔔 Reminder on";
+    else if (Notification.permission === "denied") btn.textContent = "🔔 Alerts blocked";
+    else btn.textContent = "🔔 Enable alert";
+  }
+
+  function onReminderBtn() {
+    if (!("Notification" in window)) {
+      alert("This browser can't show pop-up alerts, but you'll still see the on-screen reminder at 8:30 PM while this page is open.");
+      return;
+    }
+    if (Notification.permission === "granted") {
+      try { new Notification("Reminder is on ✓", { body: "You'll be reminded at 8:30 PM." }); } catch (e) {}
+      return;
+    }
+    if (Notification.permission === "denied") {
+      alert("Pop-up alerts are blocked in your browser settings. You'll still see the on-screen reminder while this page is open.");
+      return;
+    }
+    Notification.requestPermission().then(updateReminderBtn);
+  }
+
   // ---------- wire up ----------
   el.enterBtn.addEventListener("click", markEntered);
   el.leaveBtn.addEventListener("click", markLeft);
   el.exportBtn.addEventListener("click", exportCSV);
   el.clearBtn.addEventListener("click", clearAll);
+  document.getElementById("reminderBtn").addEventListener("click", onReminderBtn);
+  document.getElementById("dismissReminder").addEventListener("click", function () {
+    reminderDismissed = true; hideBanner();
+  });
 
+  renderAvatar();
+  updateReminderBtn();
   renderAll();
-  setInterval(renderStatus, 1000); // live countdown / count-up
+  checkReminder();
+  setInterval(function () { renderStatus(); checkReminder(); }, 1000); // live timer + reminder
 })();
 </script>
 </body>
