@@ -203,6 +203,51 @@ footer.foot{text-align:center; padding:40px 24px 30px; color:var(--ink-faint); f
 .sticker.is-do{background:linear-gradient(180deg,var(--glow-soft),var(--glow)); border-style:solid; border-color:var(--brass)}
 .sticker.is-do::before{content:""; width:7px; height:7px; border-radius:50%; background:#4a3208; margin-bottom:2px}
 
+/* ============ SONGBOOK ============ */
+.songbook{margin:64px auto}
+.songbook-head{text-align:center; margin-bottom:14px}
+.songbook-head h2{font-size:clamp(2rem,5vw,2.9rem)}
+.songbook-head p{color:var(--ink-soft); max-width:46ch; margin:10px auto 0}
+.song-legend{max-width:620px; margin:0 auto 30px; text-align:center; font-size:.9rem; color:var(--ink-soft); background:var(--bg-sunk); border:1px solid var(--line-soft); border-radius:14px; padding:12px 18px}
+.song-legend b{color:var(--brass)}
+.song{border:1px solid var(--line); border-radius:20px; background:var(--bg-raised); margin:16px 0; padding:22px 24px; transition:border-color .3s, box-shadow .3s}
+.song:hover{border-color:color-mix(in srgb,var(--brass) 45%, var(--line))}
+.song-top{display:flex; align-items:flex-start; gap:14px; flex-wrap:wrap}
+.song-name{flex:1; min-width:200px}
+.song-name h3{font-size:1.55rem; line-height:1.05}
+.song-name .why{font-size:.9rem; color:var(--ink-soft); margin-top:3px}
+.level{font-family:"Space Mono",monospace; font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; padding:5px 10px; border-radius:99px; border:1px solid var(--line); flex:none; white-space:nowrap}
+.level.easy{color:var(--correct); border-color:color-mix(in srgb,var(--correct) 45%,var(--line))}
+.level.medium{color:var(--brass); border-color:color-mix(in srgb,var(--brass) 45%,var(--line))}
+.level.tricky{color:var(--wrong); border-color:color-mix(in srgb,var(--wrong) 45%,var(--line))}
+.phrases{margin:18px 0 6px; display:flex; flex-direction:column; gap:14px}
+.phrase .plyric{font-size:.82rem; color:var(--ink-faint); font-style:italic; margin-bottom:6px}
+.chips{display:flex; flex-wrap:wrap; gap:6px}
+.nchip{
+  appearance:none; cursor:pointer; border:1px solid var(--line); background:var(--bg-sunk); color:var(--ink);
+  border-radius:10px; padding:6px 4px 4px; min-width:44px; display:flex; flex-direction:column; align-items:center; gap:1px; transition:.12s;
+}
+.nchip:hover{border-color:var(--brass); transform:translateY(-2px)}
+.nchip:focus-visible{outline:2px solid var(--brass); outline-offset:2px}
+.nchip.playing{background:var(--glow); border-color:var(--brass); color:#3a2708; transform:translateY(-2px)}
+.nchip .c-solf{font-family:"Cormorant",serif; font-weight:700; font-size:1.15rem; line-height:1}
+.nchip .c-let{font-family:"Space Mono",monospace; font-size:.56rem; opacity:.65}
+.nchip.is-do .c-solf{color:var(--brass)}
+.nchip.is-do.playing .c-solf{color:#3a2708}
+.nchip.is-black{background:var(--black-key); color:#e9ddc7}
+.nchip.is-black .c-solf{color:#e9ddc7}
+.nchip.is-black.playing{background:var(--glow); color:#3a2708}
+.song-actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; padding-top:16px; border-top:1px dashed var(--line)}
+.song-btn{appearance:none; cursor:pointer; font-family:"Nunito Sans",sans-serif; font-weight:800; font-size:.86rem; padding:11px 18px; border-radius:11px; border:1px solid transparent; transition:.18s; display:inline-flex; gap:8px; align-items:center}
+.song-btn.play{background:var(--brass); color:#fff}
+.song-btn.play:hover{background:var(--brass-bright)}
+.song-btn.learn{background:transparent; color:var(--ink); border-color:var(--line)}
+.song-btn.learn:hover{border-color:var(--brass); color:var(--brass)}
+.song-btn:focus-visible{outline:2px solid var(--brass); outline-offset:2px}
+.hero-sub-link{margin-top:16px; font-size:.92rem}
+.hero-sub-link a{color:var(--ink-soft); text-decoration:none; border-bottom:1px solid var(--line)}
+.hero-sub-link a:hover{color:var(--brass); border-color:var(--brass)}
+
 /* ============ KEYBOARD CONSOLE ============ */
 .console{
   position:fixed; left:0; right:0; bottom:0; z-index:50;
@@ -342,6 +387,7 @@ footer.foot{text-align:center; padding:40px 24px 30px; color:var(--ink-faint); f
       <button class="btn btn-primary" id="heroPlay">&#9654;&nbsp; Hear the seven notes</button>
       <button class="btn btn-ghost" id="heroStart">Start Day 1</button>
     </div>
+    <p class="hero-sub-link"><a href="#songbook">&#9835; or jump to famous songs you can play now &darr;</a></p>
   </section>
 
   <div class="wrap">
@@ -379,6 +425,18 @@ footer.foot{text-align:center; padding:40px 24px 30px; color:var(--ink-faint); f
       <p>Do one a day. Each takes 15&ndash;20 minutes: read the idea, then play the game with the keyboard below.</p>
     </div>
     <div id="dayList"></div>
+  </section>
+
+  <section class="songbook wrap" id="songbook">
+    <div class="songbook-head">
+      <span class="eyebrow">Famous &amp; nice &mdash; the easy way</span>
+      <h2>Songs to play</h2>
+      <p>Real tunes everyone knows, written in Do&ndash;Re&ndash;Mi. Nearly all use only the white keys.</p>
+    </div>
+    <div class="song-legend">
+      <b>Click any note</b> to hear it &middot; press <b>Play</b> to hear the whole song &middot; press <b>Learn</b> to play it back one note at a time on the keyboard. The brass notes are <b>Do</b> &mdash; your home.
+    </div>
+    <div id="songList"></div>
   </section>
 
   <section class="finish wrap" id="finish" hidden>
@@ -678,7 +736,7 @@ function exGuided(demoNotes, opts={}){
     intro: opts.intro||"Press a key, then tap Play to hear it done.",
     start(){
       setControls([
-        {label:"&#9654; Play it for me", accent:true, onClick:async ()=>{ setStatus(this.tag,"Listen &mdash; watch the keys light up.",null); await playSeq(demoNotes,{gap:opts.gap??110,dur:opts.dur??0.55,showSyl:opts.showSyl}); setStatus(this.tag,"Your turn &mdash; play it back at your own pace.",null); }},
+        {label:"&#9654; Play it for me", accent:true, onClick:async ()=>{ setStatus(this.tag,"Listen — watch the keys light up.",null); await playSeq(demoNotes,{gap:opts.gap??110,dur:opts.dur??0.55,showSyl:opts.showSyl}); setStatus(this.tag,"Your turn — play it back at your own pace.",null); }},
         {label:"Done &#10003;", onClick:()=>flash("Nice. Mark the day complete when it feels easy.")}
       ]);
     },
@@ -691,7 +749,7 @@ function exMatch(pool){
   let target=null, tries=0, score=0, rounds=0;
   const ask=async(self)=>{
     clearMarks(); target=rand(pool); tries=0;
-    setStatus(self.tag,"Listen&hellip; then find that note on the keys.",null);
+    setStatus(self.tag,"Listen… then find that note on the keys.",null);
     await sleep(250); Organ.pluck(target,0.7); lit(target,true); setTimeout(()=>lit(target,false),650);
   };
   return {
@@ -709,14 +767,14 @@ function exMatch(pool){
         setTimeout(()=>ask(this),900);
       } else {
         keyEls.get(m).classList.add("wrongk"); setTimeout(()=>keyEls.get(m).classList.remove("wrongk"),400);
-        const hint = m>target? "lower &mdash; try to the left" : "higher &mdash; try to the right";
+        const hint = m>target? "lower — try to the left" : "higher — try to the right";
         setStatus(this.tag,"Not that one. It's "+hint+".","no");
       }
     }
   };
 }
 function scoreShow(s,r){ /* injects a score pill into controls area status */ }
-function cheer(){ return rand(["Your ear is waking up.","Trust that.","Told you it was in there.","That's the skill, right there.","Good &mdash; again."]); }
+function cheer(){ return rand(["Your ear is waking up.","Trust that.","Told you it was in there.","That's the skill, right there.","Good — again."]); }
 
 // Interval: give root, play target, user plays target (days 4 & 5)
 function exInterval(rootPool, steps, label){
@@ -766,8 +824,8 @@ function exDirection(){
   };
   const guess=(g,self)=>{
     if(answer==null) return;
-    if(g===answer){ score++; rounds++; setStatus(self.tag,"Right &mdash; it went "+answer+". "+cheer(),"ok"); setTimeout(()=>ask(self),850); }
-    else { setStatus(self.tag,"Listen again &mdash; feel whether it rises or falls.","no"); }
+    if(g===answer){ score++; rounds++; setStatus(self.tag,"Right — it went "+answer+". "+cheer(),"ok"); setTimeout(()=>ask(self),850); }
+    else { setStatus(self.tag,"Listen again — feel whether it rises or falls.","no"); }
   };
   return {
     tag:"Up or down?", intro:"Train the direction before the distance.",
@@ -786,7 +844,7 @@ function exDirection(){
 // Echo a melody (days 7 & 10)
 function exEcho(songs){
   let song=null, seq=[], pos=0, score=0;
-  const play=async(self)=>{ setStatus(self.tag,"Listen to “"+song.name+"” &mdash; then echo it back, one key at a time.",null); await playSeq(seq,{gap:song.gap||120,dur:song.dur||0.5}); pos=0; setStatus(self.tag,"Your turn: play it back. Note 1 of "+seq.length+".",null); };
+  const play=async(self)=>{ setStatus(self.tag,"Listen to “"+song.name+"” — then echo it back, one key at a time.",null); await playSeq(seq,{gap:song.gap||120,dur:song.dur||0.5}); pos=0; setStatus(self.tag,"Your turn: play it back. Note 1 of "+seq.length+".",null); };
   const pick=(self)=>{ song=rand(songs); seq=song.notes.slice(); pos=0; clearMarks(); markTonic(seq[0]); };
   return {
     tag:"Echo the song", intro:"Hear a real tune, play it back.",
@@ -802,7 +860,7 @@ function exEcho(songs){
         else setStatus(this.tag,"Yes. Note "+(pos+1)+" of "+seq.length+".","ok");
       } else {
         keyEls.get(m).classList.add("wrongk"); setTimeout(()=>keyEls.get(m).classList.remove("wrongk"),400);
-        setStatus(this.tag,"Not yet. The next note is "+(seq[pos]>m?"higher":"lower")+" &mdash; you want "+solf(seq[pos])+".","no");
+        setStatus(this.tag,"Not yet. The next note is "+(seq[pos]>m?"higher":"lower")+" — you want "+solf(seq[pos])+".","no");
       }
     }
   };
@@ -843,7 +901,7 @@ function exHome(){
     {tonic:65, notes:[65,69,72,69,67,65]},
   ];
   const ask=async(self)=>{ clearMarks(); const p=rand(PHRASES); key=p.tonic; phrase=p.notes;
-    setStatus(self.tag,"Listen to the little phrase. Then play the note that feels like HOME &mdash; where it wants to rest.",null);
+    setStatus(self.tag,"Listen to the little phrase. Then play the note that feels like HOME — where it wants to rest.",null);
     await playSeq(phrase,{gap:70,dur:0.45}); };
   return {
     tag:"Find home", intro:"Every tune has a home note. Find it by feel.",
@@ -854,7 +912,7 @@ function exHome(){
     onKey(m){
       if(key==null) return;
       if((m%12)===(key%12)){ keyEls.get(m).classList.add("right"); score++; rounds++;
-        setStatus(this.tag,"That's home &mdash; "+solf(m)+". Feel how it settles. "+cheer(),"ok"); setTimeout(()=>ask(this),1100);
+        setStatus(this.tag,"That's home — "+solf(m)+". Feel how it settles. "+cheer(),"ok"); setTimeout(()=>ask(this),1100);
       } else {
         keyEls.get(m).classList.add("wrongk"); setTimeout(()=>keyEls.get(m).classList.remove("wrongk"),400);
         setStatus(this.tag,"Not quite home. Hum the phrase and let it fall to rest.","no");
@@ -1074,6 +1132,132 @@ document.getElementById("printStickers").addEventListener("click",()=>{
   const hint=document.getElementById("printHint");
   try{ window.print(); }
   catch(e){ if(hint){ hint.textContent="Printing is blocked here — take a screenshot of the strip below instead, or open this page in your own browser to print."; } }
+});
+
+/* ================= SONGBOOK ================= */
+const BLACK_LETTER={1:"C♯",3:"D♯",6:"F♯",8:"G♯",10:"A♯"};
+function nameSolf(m){ const pc=((m%12)+12)%12; return isWhite(m)?SOLF[pc]:BLACK[pc]; }
+function nameLetter(m){ const pc=((m%12)+12)%12; return isWhite(m)?LETTER[pc]:BLACK_LETTER[pc]; }
+
+const SONGBOOK=[
+  { name:"Ode to Joy", level:"easy", why:"Beethoven’s hymn of happiness — the melody moves mostly step by step.",
+    tempo:{gap:60,dur:0.5}, phrases:[
+      {lyric:"the famous first line", notes:[64,64,65,67,67,65,64,62]},
+      {lyric:"…and it comes home", notes:[60,60,62,64,64,62,62]},
+      {lyric:"once more, then resolves", notes:[64,64,65,67,67,65,64,62,60,60,62,64,62,60,60]},
+    ]},
+  { name:"Twinkle, Twinkle, Little Star", level:"easy", why:"The first tune almost everyone learns — and the same melody as the ABC song.",
+    tempo:{gap:60,dur:0.45}, phrases:[
+      {lyric:"Twinkle, twinkle, little star", notes:[60,60,67,67,69,69,67]},
+      {lyric:"How I wonder what you are", notes:[65,65,64,64,62,62,60]},
+      {lyric:"Up above the world so high", notes:[67,67,65,65,64,64,62]},
+      {lyric:"Like a diamond in the sky", notes:[67,67,65,65,64,64,62]},
+      {lyric:"Twinkle, twinkle, little star", notes:[60,60,67,67,69,69,67]},
+      {lyric:"How I wonder what you are", notes:[65,65,64,64,62,62,60]},
+    ]},
+  { name:"Jingle Bells", level:"easy", why:"The chorus sits almost entirely on one note — Mi — so it’s very forgiving.",
+    tempo:{gap:55,dur:0.4}, phrases:[
+      {lyric:"Jingle bells, jingle bells", notes:[64,64,64,64,64,64]},
+      {lyric:"Jingle all the way", notes:[64,67,60,62,64]},
+      {lyric:"Oh what fun it is to ride", notes:[65,65,65,65,65,64,64,64]},
+      {lyric:"In a one-horse open sleigh", notes:[64,67,67,65,62,60]},
+    ]},
+  { name:"Mary Had a Little Lamb", level:"easy", why:"Three neighbouring notes do almost all the work — Mi, Re, Do.",
+    tempo:{gap:60,dur:0.42}, phrases:[
+      {lyric:"Mary had a little lamb", notes:[64,62,60,62,64,64,64]},
+      {lyric:"Little lamb, little lamb", notes:[62,62,62,64,67,67]},
+      {lyric:"Mary had a little lamb", notes:[64,62,60,62,64,64,64]},
+      {lyric:"Its fleece was white as snow", notes:[64,62,62,64,62,60]},
+    ]},
+  { name:"Row, Row, Row Your Boat", level:"easy", why:"A gentle climb up the scale and a tumble back down — pure Do-Re-Mi.",
+    tempo:{gap:55,dur:0.42}, phrases:[
+      {lyric:"Row, row, row your boat", notes:[60,60,60,62,64]},
+      {lyric:"Gently down the stream", notes:[64,62,64,65,67]},
+      {lyric:"Merrily, merrily, merrily, merrily", notes:[72,72,72,67,67,67,64,64,64,60,60,60]},
+      {lyric:"Life is but a dream", notes:[67,65,64,62,60]},
+    ]},
+  { name:"When the Saints Go Marching In", level:"easy", why:"Starts with a clean four-note climb — Do Mi Fa Sol — you’ll nail it fast.",
+    tempo:{gap:70,dur:0.5}, phrases:[
+      {lyric:"Oh, when the saints", notes:[60,64,65,67]},
+      {lyric:"go marching in", notes:[67,64,60,64,62,60]},
+      {lyric:"Oh, when the saints go marching in", notes:[60,64,65,67,67,64,60,64,62,60]},
+    ]},
+  { name:"Old MacDonald Had a Farm", level:"easy", why:"A farmyard classic that lands squarely on home (Do) at the end of each line.",
+    tempo:{gap:60,dur:0.45}, phrases:[
+      {lyric:"Old MacDonald had a farm", notes:[60,60,60,67,69,69,67]},
+      {lyric:"E-I-E-I-O", notes:[64,64,62,62,60]},
+    ]},
+  { name:"Happy Birthday", level:"medium", why:"The one song you’ll actually get asked to play. Watch the leaps up on “birthday.”",
+    tempo:{gap:70,dur:0.5}, phrases:[
+      {lyric:"Happy birthday to you", notes:[67,67,69,67,72,71]},
+      {lyric:"Happy birthday to you", notes:[67,67,69,67,74,72]},
+      {lyric:"Happy birthday dear …", notes:[67,67,79,76,72,71,69]},
+      {lyric:"Happy birthday to you", notes:[77,77,76,72,74,72]},
+    ]},
+  { name:"London Bridge Is Falling Down", level:"medium", why:"A sing-song shape that rocks up and down around Sol.",
+    tempo:{gap:55,dur:0.42}, phrases:[
+      {lyric:"London bridge is falling down", notes:[67,69,67,65,64,65,67]},
+      {lyric:"Falling down, falling down", notes:[62,64,65,64,65,67]},
+      {lyric:"London bridge is falling down", notes:[67,69,67,65,64,65,67]},
+      {lyric:"My fair lady", notes:[62,67,64,60]},
+    ]},
+  { name:"Für Elise", level:"tricky", why:"Beethoven’s most recognised opening. Your first taste of the black keys — take it slow.",
+    tempo:{gap:60,dur:0.4}, phrases:[
+      {lyric:"the trickling opening", notes:[76,75,76,75,76,71,74,72,69]},
+      {lyric:"answered gently", notes:[60,64,69,71]},
+      {lyric:"and again", notes:[64,68,71,72]},
+    ]},
+];
+
+const songList=document.getElementById("songList");
+SONGBOOK.forEach((song,idx)=>{
+  const flat=song.phrases.flatMap(p=>p.notes);
+  const chipRefs=[];   // {el, midi} in play order
+  const card=document.createElement("div"); card.className="song";
+  const top=document.createElement("div"); top.className="song-top";
+  top.innerHTML=`<div class="song-name"><h3>${song.name}</h3><div class="why">${song.why}</div></div>
+    <span class="level ${song.level}">${song.level}</span>`;
+  card.appendChild(top);
+
+  const phrasesEl=document.createElement("div"); phrasesEl.className="phrases";
+  song.phrases.forEach(p=>{
+    const pr=document.createElement("div"); pr.className="phrase";
+    const lyr=document.createElement("div"); lyr.className="plyric"; lyr.textContent=p.lyric; pr.appendChild(lyr);
+    const chips=document.createElement("div"); chips.className="chips";
+    p.notes.forEach(m=>{
+      const b=document.createElement("button"); b.type="button";
+      b.className="nchip"+(((m%12)+12)%12===0?" is-do":"")+(isWhite(m)?"":" is-black");
+      b.innerHTML=`<span class="c-solf">${nameSolf(m)}</span><span class="c-let">${nameLetter(m)}</span>`;
+      b.addEventListener("click",()=>{ Organ.pluck(m,0.6); lit(m,true); setTimeout(()=>lit(m,false),400);
+        b.classList.add("playing"); setTimeout(()=>b.classList.remove("playing"),300); });
+      chips.appendChild(b); chipRefs.push({el:b,midi:m});
+    });
+    pr.appendChild(chips); phrasesEl.appendChild(pr);
+  });
+  card.appendChild(phrasesEl);
+
+  const actions=document.createElement("div"); actions.className="song-actions";
+  const playBtn=document.createElement("button"); playBtn.className="song-btn play"; playBtn.innerHTML="&#9654;&nbsp; Play it";
+  const learnBtn=document.createElement("button"); learnBtn.className="song-btn learn"; learnBtn.innerHTML="&#127929;&nbsp; Learn it (play along)";
+  actions.appendChild(playBtn); actions.appendChild(learnBtn);
+  card.appendChild(actions);
+  songList.appendChild(card);
+
+  let playing=false;
+  playBtn.addEventListener("click", async ()=>{
+    if(playing) return; playing=true; openKb();
+    playBtn.innerHTML="&#9835;&nbsp; Playing…";
+    for(const {el,midi} of chipRefs){
+      Organ.pluck(midi,song.tempo.dur); lit(midi,true); el.classList.add("playing");
+      await sleep(song.tempo.dur*1000*0.9);
+      lit(midi,false); el.classList.remove("playing");
+      await sleep(song.tempo.gap);
+    }
+    playBtn.innerHTML="&#9654;&nbsp; Play it"; playing=false;
+  });
+  learnBtn.addEventListener("click",()=>{
+    activateExercise(exEcho([{name:song.name, notes:flat, gap:song.tempo.gap+30, dur:song.tempo.dur}]));
+  });
 });
 
 /* ================= HERO ACTIONS ================= */

@@ -28,6 +28,18 @@ Headphones make the ear-training clearer.
 9. Find home — hearing which note a song rests on
 10. Put it all together — hear it, find it, play it
 
+## Songbook — famous songs to play
+
+Below the ten days there's a **Songbook** of well-known, beginner-friendly tunes written
+in Do–Re–Mi (nearly all on the white keys):
+
+- Ode to Joy · Twinkle, Twinkle · Jingle Bells · Mary Had a Little Lamb
+- Row, Row, Row Your Boat · When the Saints Go Marching In · Old MacDonald
+- Happy Birthday · London Bridge · Für Elise (a "level-up" tune that uses black keys)
+
+For each song you can **click any note** to hear it, press **Play** to hear the whole
+tune with the keys lighting up, or press **Learn** to play it back one note at a time.
+
 ## What's inside
 
 - A small pipe-organ voice built with the Web Audio API (additive/drawbar synthesis).
