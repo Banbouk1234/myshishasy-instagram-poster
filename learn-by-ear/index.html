@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Play What You Hear</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;0,700;1,600&family=Nunito+Sans:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap">
+<style>
+/* ============ THEME TOKENS ============ */
+:root{
+  --bg:#F1E9D8; --bg-raised:#FBF6EC; --bg-sunk:#EAE0CB;
+  --ink:#2B211A; --ink-soft:#6E5D4C; --ink-faint:#9A8A76;
+  --line:#DDCFB4; --line-soft:#E7DCC6;
+  --brass:#A9741F; --brass-bright:#C99A3E;
+  --glow:#E39B2E; --glow-soft:#F2C877;
+  --correct:#4E7A52; --wrong:#B0532C;
+  --white-key:#FCF8F0; --white-key-lo:#EFE6D3; --black-key:#2A211B; --black-key-lo:#191310;
+  --key-label:#8A7862;
+  --shadow: 24px 60px -30px rgba(60,40,15,.45);
+}
+:root:not([data-theme="light"]){
+  @media (prefers-color-scheme: dark){
+    --bg:#171210; --bg-raised:#211913; --bg-sunk:#100C0A;
+    --ink:#F1E7D5; --ink-soft:#BBA588; --ink-faint:#877260;
+    --line:#352a20; --line-soft:#2a2018;
+    --brass:#D9A94E; --brass-bright:#EDC170;
+    --glow:#F0B34A; --glow-soft:#7a5320;
+    --correct:#83B587; --wrong:#E08050;
+    --white-key:#E7DECC; --white-key-lo:#CFC4AC; --black-key:#0E0A08; --black-key-lo:#050403;
+    --key-label:#7c6a54;
+    --shadow: 24px 60px -30px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#171210; --bg-raised:#211913; --bg-sunk:#100C0A;
+  --ink:#F1E7D5; --ink-soft:#BBA588; --ink-faint:#877260;
+  --line:#352a20; --line-soft:#2a2018;
+  --brass:#D9A94E; --brass-bright:#EDC170;
+  --glow:#F0B34A; --glow-soft:#7a5320;
+  --correct:#83B587; --wrong:#E08050;
+  --white-key:#E7DECC; --white-key-lo:#CFC4AC; --black-key:#0E0A08; --black-key-lo:#050403;
+  --key-label:#7c6a54;
+  --shadow: 24px 60px -30px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Nunito Sans",system-ui,sans-serif; font-size:17px; line-height:1.65;
+  font-weight:400; letter-spacing:.005em;
+  padding-bottom:var(--console-h,340px);
+  transition:background .5s ease, color .5s ease;
+  -webkit-font-smoothing:antialiased;
+}
+@media (max-width:640px){ body{font-size:16px} }
+
+h1,h2,h3{font-family:"Cormorant",Georgia,serif; font-weight:700; line-height:1.02; margin:0; text-wrap:balance; letter-spacing:.005em}
+p{margin:0 0 1em}
+a{color:var(--brass)}
+.mono{font-family:"Space Mono",ui-monospace,monospace}
+.eyebrow{font-family:"Nunito Sans",sans-serif; text-transform:uppercase; letter-spacing:.22em; font-size:.72rem; font-weight:800; color:var(--brass)}
+
+.wrap{max-width:920px; margin:0 auto; padding:0 24px}
+
+/* ============ HEADER ============ */
+header.top{
+  position:sticky; top:0; z-index:40;
+  background:color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line-soft);
+}
+.top-in{max-width:920px; margin:0 auto; padding:12px 24px; display:flex; align-items:center; gap:18px}
+.brand{display:flex; align-items:baseline; gap:10px; font-family:"Cormorant",serif; font-weight:700; font-size:1.35rem}
+.brand .dot{color:var(--brass)}
+.top-spacer{flex:1}
+.progress-mini{display:flex; align-items:center; gap:10px; font-size:.8rem; color:var(--ink-soft)}
+.progress-track{width:110px; height:7px; border-radius:99px; background:var(--bg-sunk); overflow:hidden; border:1px solid var(--line-soft)}
+.progress-fill{height:100%; width:0; background:linear-gradient(90deg,var(--brass),var(--brass-bright)); border-radius:99px; transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.icon-btn{appearance:none; border:1px solid var(--line); background:var(--bg-raised); color:var(--ink); width:38px; height:38px; border-radius:11px; cursor:pointer; font-size:1rem; display:grid; place-items:center; transition:.2s}
+.icon-btn:hover{border-color:var(--brass); color:var(--brass)}
+.icon-btn:focus-visible{outline:2px solid var(--brass); outline-offset:2px}
+
+/* ============ HERO ============ */
+.hero{padding:76px 0 34px; text-align:center; position:relative; overflow:hidden}
+.hero .eyebrow{display:inline-block; margin-bottom:20px}
+.hero h1{font-size:clamp(2.9rem,8.5vw,5.4rem); letter-spacing:-.01em}
+.hero h1 em{font-style:italic; color:var(--brass)}
+.hero .lede{max-width:34ch; margin:22px auto 0; font-size:1.16rem; color:var(--ink-soft)}
+.solfege-strip{display:flex; justify-content:center; flex-wrap:wrap; gap:6px 4px; margin:34px auto 6px; max-width:640px}
+.syl{
+  font-family:"Cormorant",serif; font-weight:600; font-size:clamp(1.4rem,4.4vw,2.1rem);
+  padding:.15em .5em; border-radius:12px; color:var(--ink-faint); transition:.18s;
+  position:relative;
+}
+.syl.on{color:var(--bg); background:var(--glow); transform:translateY(-6px) scale(1.06); box-shadow:0 12px 26px -10px var(--glow)}
+.hero-cta{margin-top:30px; display:flex; gap:14px; justify-content:center; flex-wrap:wrap}
+.btn{
+  appearance:none; cursor:pointer; font-family:"Nunito Sans",sans-serif; font-weight:800; font-size:.98rem;
+  padding:14px 26px; border-radius:13px; border:1px solid transparent; transition:.2s; letter-spacing:.01em;
+  display:inline-flex; align-items:center; gap:10px;
+}
+.btn:focus-visible{outline:2px solid var(--brass); outline-offset:2px}
+.btn-primary{background:var(--brass); color:#fff; box-shadow:0 14px 30px -14px var(--brass)}
+.btn-primary:hover{background:var(--brass-bright); transform:translateY(-2px)}
+.btn-ghost{background:transparent; color:var(--ink); border-color:var(--line)}
+.btn-ghost:hover{border-color:var(--brass); color:var(--brass)}
+.btn[disabled]{opacity:.45; cursor:not-allowed; transform:none}
+
+/* ============ IDEA BLOCK ============ */
+.idea{max-width:640px; margin:26px auto 8px; text-align:left; background:var(--bg-raised); border:1px solid var(--line-soft); border-radius:20px; padding:26px 30px}
+.idea h2{font-size:1.7rem; margin-bottom:10px}
+.idea p:last-child{margin-bottom:0}
+.idea .tiny{font-size:.95rem; color:var(--ink-soft)}
+
+/* ============ DAY LIST ============ */
+.days{margin:60px 0 40px}
+.days-head{text-align:center; margin-bottom:36px}
+.days-head h2{font-size:clamp(2rem,5vw,2.9rem)}
+.days-head p{color:var(--ink-soft); max-width:40ch; margin:10px auto 0}
+
+.day{
+  border:1px solid var(--line); border-radius:20px; background:var(--bg-raised);
+  margin:16px 0; overflow:hidden; transition:border-color .3s, box-shadow .3s;
+}
+.day.open{border-color:var(--brass); box-shadow:0 22px 50px -34px rgba(80,55,15,.5)}
+.day.done{border-color:color-mix(in srgb, var(--correct) 55%, var(--line))}
+.day-summary{
+  display:flex; align-items:center; gap:18px; padding:20px 24px; cursor:pointer; user-select:none;
+  list-style:none;
+}
+.day-summary::-webkit-details-marker{display:none}
+.day-num{
+  font-family:"Space Mono",monospace; font-size:.82rem; font-weight:700; color:var(--brass);
+  border:1px solid var(--line); border-radius:9px; padding:7px 9px; min-width:52px; text-align:center; flex:none;
+  background:var(--bg-sunk);
+}
+.day.done .day-num{color:var(--correct); border-color:color-mix(in srgb,var(--correct) 45%, var(--line))}
+.day-titles{flex:1; min-width:0}
+.day-titles h3{font-size:1.5rem; line-height:1.05}
+.day-titles .sub{font-size:.9rem; color:var(--ink-soft); margin-top:2px}
+.day-check{flex:none; width:30px; height:30px; border-radius:50%; border:2px solid var(--line); display:grid; place-items:center; color:transparent; font-size:.9rem; transition:.25s}
+.day.done .day-check{background:var(--correct); border-color:var(--correct); color:#fff}
+.day-chevron{flex:none; color:var(--ink-faint); transition:transform .3s}
+.day.open .day-chevron{transform:rotate(180deg); color:var(--brass)}
+
+.day-body{padding:2px 26px 26px; border-top:1px solid var(--line-soft)}
+.day-body .lead{font-size:1.05rem; color:var(--ink)}
+.day-body h4{font-family:"Nunito Sans",sans-serif; font-weight:800; font-size:.78rem; letter-spacing:.14em; text-transform:uppercase; color:var(--brass); margin:22px 0 8px}
+.day-body ul{margin:0 0 1em; padding-left:1.15em}
+.day-body li{margin:.3em 0}
+.callout{background:var(--bg-sunk); border-left:3px solid var(--brass); border-radius:0 12px 12px 0; padding:14px 18px; margin:16px 0; font-size:.98rem}
+.callout b{color:var(--brass)}
+.game-launch{display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-top:22px; padding-top:20px; border-top:1px dashed var(--line)}
+.game-launch .g-meta{flex:1; min-width:180px; font-size:.9rem; color:var(--ink-soft)}
+.mark-done{appearance:none; cursor:pointer; background:transparent; border:1px solid var(--line); color:var(--ink-soft); font-family:inherit; font-weight:700; font-size:.85rem; padding:11px 16px; border-radius:11px; transition:.2s; display:inline-flex; gap:8px; align-items:center}
+.mark-done:hover{border-color:var(--correct); color:var(--correct)}
+.day.done .mark-done{background:color-mix(in srgb,var(--correct) 14%, transparent); border-color:var(--correct); color:var(--correct)}
+
+/* ============ FINISH ============ */
+.finish{text-align:center; padding:40px 0 20px}
+.finish .medal{font-size:2.6rem}
+.finish h2{font-size:clamp(2rem,5vw,3rem); margin:8px 0}
+.finish p{color:var(--ink-soft); max-width:42ch; margin:8px auto}
+
+footer.foot{text-align:center; padding:40px 24px 30px; color:var(--ink-faint); font-size:.85rem; border-top:1px solid var(--line-soft); margin-top:30px}
+
+/* ============ KEYBOARD CONSOLE ============ */
+.console{
+  position:fixed; left:0; right:0; bottom:0; z-index:50;
+  background:linear-gradient(180deg, color-mix(in srgb,var(--bg-raised) 92%, transparent), var(--bg-raised));
+  border-top:1px solid var(--line);
+  box-shadow:0 -18px 40px -30px rgba(40,25,5,.6);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+}
+.kb-handle{
+  width:100%; appearance:none; border:0; border-bottom:1px solid var(--line-soft); cursor:pointer;
+  background:transparent; color:var(--ink);
+  font-family:"Nunito Sans",sans-serif; font-weight:800; font-size:.86rem; letter-spacing:.03em;
+  padding:12px 20px; display:flex; align-items:center; justify-content:center; gap:10px; transition:color .2s;
+}
+.console.collapsed .kb-handle{border-bottom-color:transparent}
+.kb-handle:hover{color:var(--brass)}
+.kb-handle:focus-visible{outline:2px solid var(--brass); outline-offset:-3px}
+.kb-handle .chev{color:var(--brass); transition:transform .3s; display:inline-block}
+.console:not(.collapsed) .kb-handle .chev{transform:rotate(180deg)}
+.kb-handle .note{color:var(--brass)}
+.console.collapsed .console-in{display:none}
+.console.collapsed:not(.was-open){animation:handlePulse 2.4s ease-in-out 1s 3}
+@keyframes handlePulse{0%,100%{box-shadow:0 -18px 40px -30px rgba(40,25,5,.6)}50%{box-shadow:0 -8px 34px -12px var(--brass)}}
+.console-in{max-width:1000px; margin:0 auto; padding:4px 20px 16px}
+
+.status-row{display:flex; align-items:center; gap:14px; min-height:44px; margin-bottom:8px; flex-wrap:wrap}
+.status-msg{flex:1; min-width:160px; font-size:1rem; font-weight:600; color:var(--ink); display:flex; align-items:center; gap:10px}
+.status-msg .tag{font-family:"Space Mono",monospace; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.1em; padding:4px 8px; border-radius:7px; background:var(--bg-sunk); color:var(--brass); border:1px solid var(--line); flex:none}
+.status-msg.ok{color:var(--correct)} .status-msg.no{color:var(--wrong)}
+.ctrls{display:flex; gap:8px; flex-wrap:wrap}
+.cbtn{
+  appearance:none; cursor:pointer; font-family:"Nunito Sans",sans-serif; font-weight:700; font-size:.85rem;
+  padding:10px 15px; border-radius:11px; border:1px solid var(--line); background:var(--bg-raised); color:var(--ink); transition:.18s; display:inline-flex; gap:7px; align-items:center;
+}
+.cbtn:hover{border-color:var(--brass); color:var(--brass)}
+.cbtn.accent{background:var(--brass); border-color:var(--brass); color:#fff}
+.cbtn.accent:hover{background:var(--brass-bright)}
+.cbtn:focus-visible{outline:2px solid var(--brass); outline-offset:2px}
+.cbtn[disabled]{opacity:.4; cursor:not-allowed}
+.score-pill{font-family:"Space Mono",monospace; font-size:.82rem; font-weight:700; color:var(--brass); padding:6px 10px; border:1px solid var(--line); border-radius:9px; background:var(--bg-sunk); flex:none}
+
+/* keyboard */
+.kb-scroll{overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; padding:4px 2px 2px; scrollbar-width:thin}
+.keys{position:relative; height:150px; min-width:560px; margin:0 auto; touch-action:none}
+@media (max-width:640px){ .keys{height:132px} }
+.wkey,.bkey{position:absolute; bottom:0; cursor:pointer; border:1px solid var(--line); user-select:none; -webkit-tap-highlight-color:transparent}
+.wkey{
+  top:0; background:linear-gradient(180deg,var(--white-key),var(--white-key-lo));
+  border-radius:0 0 8px 8px; box-shadow:inset 0 -6px 10px -6px rgba(80,55,20,.25);
+  display:flex; flex-direction:column; justify-content:flex-end; align-items:center; padding-bottom:10px;
+  transition:background .06s, transform .06s;
+}
+.bkey{
+  background:linear-gradient(180deg,var(--black-key),var(--black-key-lo));
+  border-radius:0 0 6px 6px; z-index:3; height:62%;
+  box-shadow:0 5px 8px -2px rgba(0,0,0,.5), inset 0 -4px 6px -3px rgba(255,255,255,.12);
+  display:flex; flex-direction:column; justify-content:flex-end; align-items:center; padding-bottom:8px;
+  transition:background .06s, transform .06s;
+}
+.wkey.press{background:linear-gradient(180deg,var(--glow-soft),var(--glow)); transform:translateY(2px)}
+.bkey.press{background:linear-gradient(180deg,var(--glow),#a86a12); transform:translateY(2px)}
+.wkey.lit{background:linear-gradient(180deg,var(--glow-soft),var(--glow))}
+.bkey.lit{background:linear-gradient(180deg,var(--glow),#a86a12)}
+.wkey.right,.bkey.right{box-shadow:0 0 0 3px var(--correct), 0 6px 14px -4px var(--correct)}
+.wkey.wrongk,.bkey.wrongk{box-shadow:0 0 0 3px var(--wrong)}
+.wlabel{font-family:"Cormorant",serif; font-weight:600; font-size:1.05rem; color:var(--key-label); pointer-events:none; line-height:1}
+.wletter{font-family:"Space Mono",monospace; font-size:.6rem; color:var(--ink-faint); pointer-events:none; margin-top:3px; opacity:.8}
+.wkey.press .wlabel,.wkey.lit .wlabel,.wkey.press .wletter,.wkey.lit .wletter{color:#3a2708}
+.blabel{font-family:"Space Mono",monospace; font-size:.52rem; color:#c9b596; pointer-events:none; opacity:.75}
+.wkey.tonic::before{content:""; position:absolute; top:8px; width:9px; height:9px; border-radius:50%; background:var(--brass); opacity:.85}
+.hide-labels .wlabel,.hide-labels .wletter,.hide-labels .blabel{display:none}
+.letters-only .wlabel{display:none}
+.letters-only .wletter{font-size:.82rem; opacity:1; color:var(--key-label)}
+.solf-only .wletter{display:none}
+
+.kb-tools{display:flex; align-items:center; gap:8px; margin-top:10px; flex-wrap:wrap; font-size:.8rem; color:var(--ink-soft)}
+.chip{appearance:none; cursor:pointer; font-family:inherit; font-size:.76rem; font-weight:700; padding:6px 11px; border-radius:99px; border:1px solid var(--line); background:transparent; color:var(--ink-soft); transition:.15s}
+.chip.active{background:var(--brass); border-color:var(--brass); color:#fff}
+.chip:hover:not(.active){border-color:var(--brass); color:var(--brass)}
+.kb-hint{margin-left:auto; font-size:.72rem; color:var(--ink-faint)}
+@media (max-width:640px){ .kb-hint{display:none} }
+
+.flash{position:fixed; left:50%; bottom:calc(var(--console-h,340px) + 18px); transform:translateX(-50%); z-index:60; background:var(--ink); color:var(--bg); padding:12px 22px; border-radius:14px; font-weight:700; box-shadow:var(--shadow); opacity:0; pointer-events:none; transition:opacity .3s, transform .3s}
+.flash.show{opacity:1; transform:translateX(-50%) translateY(-6px)}
+
+@media (prefers-reduced-motion:reduce){ *{transition:none!important; animation:none!important} }
+</style>
+</head>
+<body class="solf-only">
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><span class="dot">&#9834;</span> By&nbsp;Ear</div>
+    <div class="top-spacer"></div>
+    <div class="progress-mini">
+      <span class="mono" id="progressLabel">0 / 10</span>
+      <span class="progress-track"><span class="progress-fill" id="progressFill"></span></span>
+    </div>
+    <button class="icon-btn" id="themeBtn" title="Switch light / dark" aria-label="Switch theme">&#9789;</button>
+  </div>
+</header>
+
+<main>
+  <section class="hero wrap">
+    <span class="eyebrow">A 10-day path for organ players</span>
+    <h1>Play What<br>You <em>Hear</em></h1>
+    <p class="lede">You already know how to press the keys. Now let&rsquo;s teach your ear to lead your hands.</p>
+
+    <div class="solfege-strip" id="solfegeStrip" aria-hidden="true">
+      <span class="syl" data-midi="60">Do</span>
+      <span class="syl" data-midi="62">Re</span>
+      <span class="syl" data-midi="64">Mi</span>
+      <span class="syl" data-midi="65">Fa</span>
+      <span class="syl" data-midi="67">Sol</span>
+      <span class="syl" data-midi="69">La</span>
+      <span class="syl" data-midi="71">Si</span>
+      <span class="syl" data-midi="72">Do</span>
+    </div>
+
+    <div class="hero-cta">
+      <button class="btn btn-primary" id="heroPlay">&#9654;&nbsp; Hear the seven notes</button>
+      <button class="btn btn-ghost" id="heroStart">Start Day 1</button>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div class="idea">
+      <h2>The whole secret, in one breath</h2>
+      <p>When you noticed it&rsquo;s <b>just Do to Si</b> &mdash; seven notes that repeat &mdash; you found the real thing. Almost every song you love lives inside those seven notes. Nothing more is hiding.</p>
+      <p class="tiny">Playing by ear isn&rsquo;t a gift some people are born with. It&rsquo;s three small skills stacked together: knowing where the notes are, hearing how far one note jumps to the next, and trusting your hand to follow. We&rsquo;ll build them one day at a time &mdash; and you&rsquo;ll practice each one on the keyboard right here on this page.</p>
+    </div>
+  </div>
+
+  <section class="days wrap">
+    <div class="days-head">
+      <h2>Ten days</h2>
+      <p>Do one a day. Each takes 15&ndash;20 minutes: read the idea, then play the game with the keyboard below.</p>
+    </div>
+    <div id="dayList"></div>
+  </section>
+
+  <section class="finish wrap" id="finish" hidden>
+    <div class="medal">&#127894;</div>
+    <h2>You can play what you hear</h2>
+    <p>Ten days ago it was a mystery. Now you can find home, follow the jumps, and let a melody out through your fingers. Keep a song stuck in your head? Go find it on the keys.</p>
+    <button class="btn btn-ghost" id="resetBtn" style="margin-top:14px">Start the ten days again</button>
+  </section>
+</main>
+
+<footer class="foot">
+  Built for one organ player who wanted to understand the music under their hands. <br>
+  Sound is made live in your browser &mdash; headphones make the ear-training clearer.
+</footer>
+
+<!-- ============ THE CONSOLE ============ -->
+<div class="console collapsed" id="console">
+  <button class="kb-handle" id="kbToggle" aria-expanded="false" aria-controls="consoleBody">
+    <span class="note">&#9834;</span> <span id="kbToggleLabel">Open the keyboard &amp; games</span> <span class="chev">&#9650;</span>
+  </button>
+  <div class="console-in" id="consoleBody">
+    <div class="status-row">
+      <div class="status-msg" id="statusMsg"><span class="tag" id="statusTag">Free play</span><span id="statusText">Press any key. This is your instrument for the next ten days.</span></div>
+      <div class="ctrls" id="ctrls"></div>
+    </div>
+
+    <div class="kb-scroll">
+      <div class="keys" id="keys" role="group" aria-label="Playable keyboard"></div>
+    </div>
+
+    <div class="kb-tools">
+      <button class="chip active" data-labels="solf">Do Re Mi</button>
+      <button class="chip" data-labels="letters">C D E</button>
+      <button class="chip" data-labels="none">No labels</button>
+      <span class="kb-hint">Tip: your computer keys <b>A&ndash;L</b> and <b>W E T Y U</b> play too</span>
+    </div>
+  </div>
+</div>
+
+<div class="flash" id="flash"></div>
+
+<script>
+"use strict";
+/* ================= AUDIO: a small pipe-organ ================= */
+const Organ = (() => {
+  let ctx, master, comp;
+  const live = new Map();           // midi -> {oscs, gain, stopAt}
+  function ensure(){
+    if(ctx) return;
+    ctx = new (window.AudioContext||window.webkitAudioContext)();
+    comp = ctx.createDynamicsCompressor();
+    master = ctx.createGain(); master.gain.value = 0.9;
+    const lp = ctx.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=4200; lp.Q.value=.4;
+    master.connect(lp); lp.connect(comp); comp.connect(ctx.destination);
+  }
+  function resume(){ ensure(); if(ctx.state==="suspended") ctx.resume(); }
+  const freq = m => 440*Math.pow(2,(m-69)/12);
+  // drawbar-ish partials: fundamental, octave, twelfth, 2 octaves, faint 3rd-octave
+  const PARTIALS = [[1,0.55],[2,0.32],[3,0.14],[4,0.11],[6,0.05]];
+  function noteOn(midi, vel=1){
+    resume();
+    if(live.has(midi)) return;
+    const now = ctx.currentTime, f0 = freq(midi);
+    const g = ctx.createGain(); g.gain.value = 0;
+    g.connect(master);
+    const oscs = [];
+    PARTIALS.forEach(([mult,amp],i)=>{
+      const o = ctx.createOscillator();
+      o.type = i===0 ? "triangle" : "sine";
+      o.frequency.value = f0*mult;
+      o.detune.value = (i%2? 4 : -3);           // gentle warmth
+      const og = ctx.createGain(); og.gain.value = amp;
+      o.connect(og); og.connect(g); o.start(now);
+      oscs.push(o);
+    });
+    const peak = 0.9*vel;
+    g.gain.cancelScheduledValues(now);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(peak, now+0.02);       // soft chiff attack
+    g.gain.linearRampToValueAtTime(peak*0.82, now+0.18);  // settle
+    live.set(midi, {oscs, g});
+  }
+  function noteOff(midi){
+    const v = live.get(midi); if(!v) return;
+    const now = ctx.currentTime;
+    v.g.gain.cancelScheduledValues(now);
+    v.g.gain.setValueAtTime(v.g.gain.value, now);
+    v.g.gain.linearRampToValueAtTime(0.0001, now+0.14);
+    v.oscs.forEach(o=>o.stop(now+0.16));
+    live.delete(midi);
+  }
+  // fire-and-forget note of fixed length (for playback)
+  function pluck(midi, dur=0.5, vel=1){
+    resume();
+    const now = ctx.currentTime, f0=freq(midi);
+    const g = ctx.createGain(); g.gain.value=0; g.connect(master);
+    PARTIALS.forEach(([mult,amp],i)=>{
+      const o=ctx.createOscillator(); o.type=i===0?"triangle":"sine";
+      o.frequency.value=f0*mult; o.detune.value=(i%2?4:-3);
+      const og=ctx.createGain(); og.gain.value=amp; o.connect(og); og.connect(g);
+      o.start(now); o.stop(now+dur+0.2);
+    });
+    const peak=0.9*vel;
+    g.gain.setValueAtTime(0,now);
+    g.gain.linearRampToValueAtTime(peak,now+0.02);
+    g.gain.linearRampToValueAtTime(peak*0.8,now+Math.min(0.18,dur*0.6));
+    g.gain.setValueAtTime(peak*0.8, now+dur);
+    g.gain.linearRampToValueAtTime(0.0001, now+dur+0.16);
+  }
+  return {resume, noteOn, noteOff, pluck, get ctx(){return ctx}};
+})();
+
+/* ================= NOTE NAMING (fixed Do) ================= */
+const SOLF = {0:"Do",2:"Re",4:"Mi",5:"Fa",7:"Sol",9:"La",11:"Si"};
+const LETTER = {0:"C",2:"D",4:"E",5:"F",7:"G",9:"A",11:"B"};
+const BLACK = {1:"Do♯",3:"Re♯",6:"Fa♯",8:"Sol♯",10:"La♯"};
+const isWhite = m => [0,2,4,5,7,9,11].includes(((m%12)+12)%12);
+const solf = m => SOLF[((m%12)+12)%12];
+const letter = m => LETTER[((m%12)+12)%12];
+
+/* ================= BUILD KEYBOARD ================= */
+const LOW=60, HIGH=84;                       // C4 .. C6
+const keysEl = document.getElementById("keys");
+const keyEls = new Map();                     // midi -> element
+(function buildKeyboard(){
+  const whites=[]; for(let m=LOW;m<=HIGH;m++) if(isWhite(m)) whites.push(m);
+  const n=whites.length, wpc=100/n, bw=wpc*0.62;
+  // white keys
+  whites.forEach((m,i)=>{
+    const k=document.createElement("div");
+    k.className="wkey"; k.dataset.midi=m;
+    k.style.left=(i*wpc)+"%"; k.style.width=wpc+"%";
+    k.innerHTML=`<span class="wlabel">${solf(m)}</span><span class="wletter">${letter(m)}${Math.floor(m/12)-1}</span>`;
+    keysEl.appendChild(k); keyEls.set(m,k);
+  });
+  // black keys
+  for(let m=LOW;m<=HIGH;m++){
+    if(isWhite(m)) continue;
+    const whitesLeft = whites.filter(w=>w<m).length;   // boundary after this many whites
+    const k=document.createElement("div");
+    k.className="bkey"; k.dataset.midi=m;
+    k.style.left=(whitesLeft*wpc - bw/2)+"%"; k.style.width=bw+"%";
+    k.innerHTML=`<span class="blabel">${BLACK[((m%12)+12)%12]}</span>`;
+    keysEl.appendChild(k); keyEls.set(m,k);
+  }
+})();
+
+function press(midi){ const el=keyEls.get(midi); if(el) el.classList.add("press"); }
+function release(midi){ const el=keyEls.get(midi); if(el) el.classList.remove("press"); }
+function lit(midi,on){ const el=keyEls.get(midi); if(el) el.classList.toggle("lit",on); }
+function clearMarks(){ keyEls.forEach(el=>el.classList.remove("right","wrongk","lit","tonic")); }
+function markTonic(midi){ const el=keyEls.get(midi); if(el) el.classList.add("tonic"); }
+
+/* ---- pointer + mouse + touch handling ---- */
+let pointerDown=false;
+function keyFromEvent(t){ const el=t.closest(".wkey,.bkey"); return el?parseInt(el.dataset.midi):null; }
+function startNote(midi){ if(midi==null) return; Organ.noteOn(midi); press(midi); handleInput(midi); }
+function stopNote(midi){ if(midi==null) return; Organ.noteOff(midi); release(midi); }
+
+keysEl.addEventListener("pointerdown", e=>{
+  e.preventDefault(); Organ.resume(); pointerDown=true;
+  const m=keyFromEvent(e.target); if(m!=null){ keysEl.setPointerCapture?.(e.pointerId); startNote(m); }
+});
+keysEl.addEventListener("pointerup", e=>{ pointerDown=false; keyEls.forEach((el,m)=>{ if(el.classList.contains("press")) stopNote(m); }); });
+keysEl.addEventListener("pointercancel", ()=>{ pointerDown=false; keyEls.forEach((el,m)=>{ if(el.classList.contains("press")) stopNote(m); }); });
+keysEl.addEventListener("pointerleave", e=>{ /* keep held note until up */ });
+keysEl.addEventListener("pointermove", e=>{
+  if(!pointerDown) return;
+  const m=keyFromEvent(document.elementFromPoint(e.clientX,e.clientY)||e.target);
+  keyEls.forEach((el,mid)=>{ if(el.classList.contains("press") && mid!==m) stopNote(mid); });
+  if(m!=null && !keyEls.get(m).classList.contains("press")) startNote(m);
+});
+
+/* ---- computer keyboard ---- */
+const KEYMAP={a:60,w:61,s:62,e:63,d:64,f:65,t:66,g:67,y:68,h:69,u:70,j:71,k:72,o:73,l:74,p:75,";":76,"'":77};
+const heldKeys=new Set();
+window.addEventListener("keydown",e=>{
+  if(e.repeat||e.metaKey||e.ctrlKey||e.altKey) return;
+  const m=KEYMAP[e.key.toLowerCase()];
+  if(m!=null && !heldKeys.has(e.key.toLowerCase())){ heldKeys.add(e.key.toLowerCase()); openKb(); startNote(m); }
+});
+window.addEventListener("keyup",e=>{
+  const kk=e.key.toLowerCase(), m=KEYMAP[kk];
+  if(m!=null){ heldKeys.delete(kk); stopNote(m); }
+});
+
+/* ================= LABEL TOGGLES ================= */
+if(!document.body.classList.contains("solf-only") && !document.body.classList.contains("letters-only") && !document.body.classList.contains("hide-labels")){
+  document.body.classList.add("solf-only");
+}
+document.querySelectorAll(".chip[data-labels]").forEach(chip=>{
+  chip.addEventListener("click",()=>{
+    document.querySelectorAll(".chip[data-labels]").forEach(c=>c.classList.remove("active"));
+    chip.classList.add("active");
+    const mode=chip.dataset.labels;
+    document.body.classList.remove("solf-only","letters-only","hide-labels");
+    if(mode==="solf") document.body.classList.add("solf-only");
+    else if(mode==="letters") document.body.classList.add("letters-only");
+    else document.body.classList.add("hide-labels");
+  });
+});
+
+/* ================= CONSOLE STATUS + CONTROLS ================= */
+const statusTag=document.getElementById("statusTag");
+const statusText=document.getElementById("statusText");
+const statusMsg=document.getElementById("statusMsg");
+const ctrlsEl=document.getElementById("ctrls");
+function setStatus(tag,text,tone){ statusTag.textContent=tag; statusText.textContent=text; statusMsg.className="status-msg"+(tone?(" "+tone):""); }
+function setControls(list){
+  ctrlsEl.innerHTML="";
+  list.forEach(c=>{
+    const b=document.createElement("button");
+    b.className="cbtn"+(c.accent?" accent":"");
+    b.innerHTML=c.label;
+    if(c.disabled) b.disabled=true;
+    b.addEventListener("click",c.onClick);
+    ctrlsEl.appendChild(b);
+  });
+}
+const flashEl=document.getElementById("flash");
+let flashT;
+function flash(msg){ flashEl.textContent=msg; flashEl.classList.add("show"); clearTimeout(flashT); flashT=setTimeout(()=>flashEl.classList.remove("show"),1400); }
+
+/* ================= PLAYBACK HELPERS ================= */
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+async function playSeq(notes, {gap=90, dur=0.5, showSyl=false}={}){
+  for(const m of notes){
+    Organ.pluck(m,dur); lit(m,true);
+    if(showSyl) pulseSyllable(m);
+    await sleep(dur*1000*0.9);
+    lit(m,false);
+    await sleep(gap);
+  }
+}
+function pulseSyllable(midi){
+  const el=document.querySelector(`.syl[data-midi="${midi}"]`);
+  if(el){ el.classList.add("on"); setTimeout(()=>el.classList.remove("on"),420); }
+}
+
+/* ================= EXERCISE ENGINE ================= */
+let active=null;                 // current exercise object
+let inputMode=null;              // how key presses are interpreted
+function handleInput(midi){ if(active && active.onKey) active.onKey(midi); }
+
+function activateExercise(ex){
+  openKb();
+  clearMarks();
+  active=ex;
+  setStatus(ex.tag, ex.intro, null);
+  ex.start();
+  document.getElementById("console").scrollIntoView({block:"nearest"});
+  document.getElementById("console").animate?.([{boxShadow:"0 -18px 40px -30px rgba(40,25,5,.6)"},{boxShadow:"0 -10px 60px -20px var(--brass)"},{boxShadow:"0 -18px 40px -30px rgba(40,25,5,.6)"}],{duration:900});
+}
+function clearExercise(){
+  active=null; clearMarks();
+  setStatus("Free play","Press any key. This is your instrument for the next ten days.",null);
+  setControls([]);
+}
+
+/* Scale of C major within range */
+const CMAJ=[60,62,64,65,67,69,71,72,74,76,77,79,81,83,84];
+const rand = arr => arr[Math.floor(Math.random()*arr.length)];
+
+/* ---------- Exercise builders ---------- */
+
+// Guided play-along (days 1 & 2): demo button + free play
+function exGuided(demoNotes, opts={}){
+  return {
+    tag: opts.tag||"Play along",
+    intro: opts.intro||"Press a key, then tap Play to hear it done.",
+    start(){
+      setControls([
+        {label:"&#9654; Play it for me", accent:true, onClick:async ()=>{ setStatus(this.tag,"Listen &mdash; watch the keys light up.",null); await playSeq(demoNotes,{gap:opts.gap??110,dur:opts.dur??0.55,showSyl:opts.showSyl}); setStatus(this.tag,"Your turn &mdash; play it back at your own pace.",null); }},
+        {label:"Done &#10003;", onClick:()=>flash("Nice. Mark the day complete when it feels easy.")}
+      ]);
+    },
+    onKey(){}
+  };
+}
+
+// Match a single note (day 3)
+function exMatch(pool){
+  let target=null, tries=0, score=0, rounds=0;
+  const ask=async(self)=>{
+    clearMarks(); target=rand(pool); tries=0;
+    setStatus(self.tag,"Listen&hellip; then find that note on the keys.",null);
+    await sleep(250); Organ.pluck(target,0.7); lit(target,true); setTimeout(()=>lit(target,false),650);
+  };
+  return {
+    tag:"Match the note", intro:"I'll play one note. Find it.",
+    start(){ score=0; rounds=0; setControls([
+      {label:"&#9654; Play the note", accent:true, onClick:()=>{ if(target==null){ask(this);} else {Organ.pluck(target,0.7);} }},
+      {label:"Give a hint", onClick:()=>{ if(target!=null){ flash("It's "+solf(target)); } }},
+      {label:"Skip", onClick:()=>{ if(target!=null){ flash("It was "+solf(target)); ask(this);} }}
+    ]); ask(this); scoreShow(0,0); },
+    onKey(m){
+      if(target==null) return;
+      tries++;
+      if(m===target){ keyEls.get(m).classList.add("right"); score++; rounds++;
+        setStatus(this.tag,"Yes! That's "+solf(m)+". "+cheer(),"ok"); scoreShow(score,rounds);
+        setTimeout(()=>ask(this),900);
+      } else {
+        keyEls.get(m).classList.add("wrongk"); setTimeout(()=>keyEls.get(m).classList.remove("wrongk"),400);
+        const hint = m>target? "lower &mdash; try to the left" : "higher &mdash; try to the right";
+        setStatus(this.tag,"Not that one. It's "+hint+".","no");
+      }
+    }
+  };
+}
+function scoreShow(s,r){ /* injects a score pill into controls area status */ }
+function cheer(){ return rand(["Your ear is waking up.","Trust that.","Told you it was in there.","That's the skill, right there.","Good &mdash; again."]); }
+
+// Interval: give root, play target, user plays target (days 4 & 5)
+function exInterval(rootPool, steps, label){
+  let root=null, target=null, score=0, rounds=0;
+  const ask=async(self)=>{
+    clearMarks(); root=rand(rootPool);
+    const step=rand(steps); target=root+step;
+    if(target>HIGH){ root=rootPool[0]; target=root+step; }
+    markTonic(root);
+    setStatus(self.tag,"Here's your starting note (the dot). Listen to the jump, then play the second note.",null);
+    Organ.pluck(root,0.6); lit(root,true); await sleep(650); lit(root,false); await sleep(180);
+    Organ.pluck(target,0.6); lit(target,true); setTimeout(()=>lit(target,false),600);
+  };
+  return {
+    tag:label||"The jump", intro:"Two notes. You start on the dot; find the second.",
+    start(){ score=0; rounds=0; setControls([
+      {label:"&#9654; Play the jump", accent:true, onClick:()=>{ if(root==null) ask(this); else replay(); }},
+      {label:"Just the start", onClick:()=>{ if(root!=null){Organ.pluck(root,0.6); lit(root,true); setTimeout(()=>lit(root,false),550);} }},
+      {label:"Skip", onClick:()=>{ if(target!=null){ flash("It was "+solf(root)+" → "+solf(target)); ask(this);} }}
+    ]); ask(this);
+      async function replay(){ Organ.pluck(root,0.55); lit(root,true); await sleep(600); lit(root,false); await sleep(160); Organ.pluck(target,0.55); lit(target,true); setTimeout(()=>lit(target,false),560);} this._replay=replay;
+    },
+    onKey(m){
+      if(target==null) return;
+      if(m===target){ keyEls.get(m).classList.add("right"); score++; rounds++;
+        setStatus(this.tag,solf(root)+" → "+solf(m)+". "+cheer(),"ok");
+        setTimeout(()=>ask(this),950);
+      } else if(m===root){ Organ.pluck(m,0.4);
+      } else {
+        keyEls.get(m).classList.add("wrongk"); setTimeout(()=>keyEls.get(m).classList.remove("wrongk"),400);
+        setStatus(this.tag, (m>target?"A bit lower.":"A bit higher.")+" Same jump from the dot.","no");
+      }
+    }
+  };
+}
+
+// Direction: up / down / same (day 6) -- answered with buttons
+function exDirection(){
+  let a=null,b=null,answer=null, score=0, rounds=0;
+  const ask=async(self)=>{
+    clearMarks(); a=rand(CMAJ.slice(0,10)); const opts=[-4,-2,-1,0,1,2,4].map(x=>a+x*2).filter(x=>CMAJ.includes(x));
+    const roll=Math.random();
+    if(roll<0.3){ b=a; answer="same"; } else { b=rand(CMAJ.filter(x=>x!==a && Math.abs(x-a)<=9)); answer=b>a?"up":"down"; }
+    setStatus(self.tag,"Two notes. Did the second go up, down, or stay the same?",null);
+    Organ.pluck(a,0.55); lit(a,true); await sleep(600); lit(a,false); await sleep(150);
+    Organ.pluck(b,0.55); lit(b,true); setTimeout(()=>lit(b,false),560);
+  };
+  const guess=(g,self)=>{
+    if(answer==null) return;
+    if(g===answer){ score++; rounds++; setStatus(self.tag,"Right &mdash; it went "+answer+". "+cheer(),"ok"); setTimeout(()=>ask(self),850); }
+    else { setStatus(self.tag,"Listen again &mdash; feel whether it rises or falls.","no"); }
+  };
+  return {
+    tag:"Up or down?", intro:"Train the direction before the distance.",
+    start(){ score=0; rounds=0; setControls([
+      {label:"&#9654; Play", accent:true, onClick:()=>{ if(a==null) ask(this); else replay(); }},
+      {label:"&#8593; Up", onClick:()=>guess("up",this)},
+      {label:"&#8595; Down", onClick:()=>guess("down",this)},
+      {label:"= Same", onClick:()=>guess("same",this)},
+    ]); ask(this);
+      async function replay(){ Organ.pluck(a,0.5); lit(a,true); await sleep(560); lit(a,false); await sleep(150); Organ.pluck(b,0.5); lit(b,true); setTimeout(()=>lit(b,false),520);} this._replay=replay;
+    },
+    onKey(){}
+  };
+}
+
+// Echo a melody (days 7 & 10)
+function exEcho(songs){
+  let song=null, seq=[], pos=0, score=0;
+  const play=async(self)=>{ setStatus(self.tag,"Listen to “"+song.name+"” &mdash; then echo it back, one key at a time.",null); await playSeq(seq,{gap:song.gap||120,dur:song.dur||0.5}); pos=0; setStatus(self.tag,"Your turn: play it back. Note 1 of "+seq.length+".",null); };
+  const pick=(self)=>{ song=rand(songs); seq=song.notes.slice(); pos=0; clearMarks(); markTonic(seq[0]); };
+  return {
+    tag:"Echo the song", intro:"Hear a real tune, play it back.",
+    start(){ score=0; pick(this); setControls([
+      {label:"&#9654; Play the tune", accent:true, onClick:()=>play(this)},
+      {label:"Another tune", onClick:()=>{ pick(this); flash("New tune: "+song.name); play(this); }},
+      {label:"Show me a note", onClick:()=>{ if(pos<seq.length){ lit(seq[pos],true); setTimeout(()=>lit(seq[pos],false),700); Organ.pluck(seq[pos],0.5);} }}
+    ]); play(this); },
+    onKey(m){
+      if(!seq.length) return;
+      if(m===seq[pos]){ keyEls.get(m).classList.add("right"); setTimeout(()=>keyEls.get(m).classList.remove("right"),350); pos++;
+        if(pos>=seq.length){ setStatus(this.tag,"That's the whole tune! "+cheer(),"ok"); markTonic(seq[0]); }
+        else setStatus(this.tag,"Yes. Note "+(pos+1)+" of "+seq.length+".","ok");
+      } else {
+        keyEls.get(m).classList.add("wrongk"); setTimeout(()=>keyEls.get(m).classList.remove("wrongk"),400);
+        setStatus(this.tag,"Not yet. The next note is "+(seq[pos]>m?"higher":"lower")+" &mdash; you want "+solf(seq[pos])+".","no");
+      }
+    }
+  };
+}
+
+// Build a chord (day 8): play all notes of the triad
+function exChord(chords){
+  let chord=null, need=new Set(), got=new Set();
+  const pick=(self)=>{ chord=rand(chords); need=new Set(chord.notes); got=new Set(); clearMarks(); chord.notes.forEach(markTonic); setStatus(self.tag,"Build "+chord.name+": play its "+chord.notes.length+" notes together (the dots).",null); };
+  const demo=async()=>{ chord.notes.forEach(m=>{Organ.pluck(m,1.1); lit(m,true);}); await sleep(1100); chord.notes.forEach(m=>lit(m,false)); };
+  return {
+    tag:"Build the chord", intro:"Three notes at once make a chord.",
+    start(){ pick(this); setControls([
+      {label:"&#9654; Hear it", accent:true, onClick:()=>demo()},
+      {label:"Another chord", onClick:()=>{ pick(this); }},
+    ]); },
+    onKey(m){
+      if(!chord) return;
+      if(need.has(m)){ got.add(m); keyEls.get(m).classList.add("right");
+        if(got.size===need.size){ setStatus(this.tag,"That's "+chord.name+"! Hear how they agree. "+cheer(),"ok"); setTimeout(()=>{ pick(this); },1400); }
+        else setStatus(this.tag,(need.size-got.size)+" note(s) to go.","ok");
+      } else {
+        keyEls.get(m).classList.add("wrongk"); setTimeout(()=>keyEls.get(m).classList.remove("wrongk"),400);
+        setStatus(this.tag,"That note isn't in "+chord.name+". Aim for a dot.","no");
+      }
+    }
+  };
+}
+
+// Find home (day 9): play a phrase, user plays the tonic
+function exHome(){
+  let key=null, phrase=[], score=0, rounds=0;
+  const PHRASES=[
+    {tonic:60, notes:[60,64,67,64,62,60]},
+    {tonic:60, notes:[67,65,64,62,60]},
+    {tonic:60, notes:[60,62,64,65,64,62,60]},
+    {tonic:67, notes:[67,71,74,71,69,67]},
+    {tonic:65, notes:[65,69,72,69,67,65]},
+  ];
+  const ask=async(self)=>{ clearMarks(); const p=rand(PHRASES); key=p.tonic; phrase=p.notes;
+    setStatus(self.tag,"Listen to the little phrase. Then play the note that feels like HOME &mdash; where it wants to rest.",null);
+    await playSeq(phrase,{gap:70,dur:0.45}); };
+  return {
+    tag:"Find home", intro:"Every tune has a home note. Find it by feel.",
+    start(){ score=0; rounds=0; setControls([
+      {label:"&#9654; Play the phrase", accent:true, onClick:()=>{ if(!phrase.length) ask(this); else playSeq(phrase,{gap:70,dur:0.45}); }},
+      {label:"Skip", onClick:()=>{ flash("Home was "+solf(key)); ask(this); }}
+    ]); ask(this); },
+    onKey(m){
+      if(key==null) return;
+      if((m%12)===(key%12)){ keyEls.get(m).classList.add("right"); score++; rounds++;
+        setStatus(this.tag,"That's home &mdash; "+solf(m)+". Feel how it settles. "+cheer(),"ok"); setTimeout(()=>ask(this),1100);
+      } else {
+        keyEls.get(m).classList.add("wrongk"); setTimeout(()=>keyEls.get(m).classList.remove("wrongk"),400);
+        setStatus(this.tag,"Not quite home. Hum the phrase and let it fall to rest.","no");
+      }
+    }
+  };
+}
+
+/* ================= SONGS ================= */
+const SONGS=[
+  {name:"Twinkle, Twinkle", notes:[60,60,67,67,69,69,67, 65,65,64,64,62,62,60], gap:70, dur:0.42},
+  {name:"Frère Jacques", notes:[60,62,64,60, 60,62,64,60, 64,65,67, 64,65,67], gap:70, dur:0.42},
+  {name:"Mary Had a Little Lamb", notes:[64,62,60,62,64,64,64, 62,62,62, 64,67,67], gap:70, dur:0.4},
+  {name:"Ode to Joy", notes:[64,64,65,67,67,65,64,62,60,60,62,64,64,62,62], gap:70, dur:0.42},
+];
+const SHORT_SONGS=[
+  {name:"Twinkle (opening)", notes:[60,60,67,67,69,69,67], gap:80, dur:0.45},
+  {name:"Mary's Lamb (opening)", notes:[64,62,60,62,64,64,64], gap:80, dur:0.45},
+  {name:"Frère Jacques (opening)", notes:[60,62,64,60], gap:80, dur:0.5},
+];
+const TRIADS=[
+  {name:"Do major (Do–Mi–Sol)", notes:[60,64,67]},
+  {name:"Fa major (Fa–La–Do)", notes:[65,69,72]},
+  {name:"Sol major (Sol–Si–Re)", notes:[67,71,74]},
+  {name:"La minor (La–Do–Mi)", notes:[69,72,76]},
+];
+
+/* ================= THE 10 DAYS ================= */
+const DAYS=[
+  {
+    n:1, title:"Meet the seven notes", sub:"Where Do lives, and the map of the keys",
+    body:`
+      <p class="lead">You've been pressing these keys for a while. Today we just put names to them &mdash; the seven you already spotted: <b>Do, Re, Mi, Fa, Sol, La, Si</b>, and then Do again, one step higher.</p>
+      <h4>The trick to never get lost</h4>
+      <p>Look at the black keys. They come in a group of <b>two</b>, then a group of <b>three</b>, over and over. <b>Do</b> is always the white key just to the <em>left</em> of the group of two. Find that, and every other note falls into place.</p>
+      <div class="callout"><b>Try it:</b> On the keyboard below, find every <b>Do</b>. It's the white key hugging the left side of each pair of black keys. The little brass dot marks it.</div>
+      <p>That's the whole map. Seven names, repeating up and down the keyboard forever.</p>`,
+    game:{label:"Light up every Do", meta:"No scoring &mdash; just find your bearings.", make:()=>({
+      tag:"Find Do", intro:"Find and play each Do on the keyboard.",
+      start(){ clearMarks(); [60,72,84].forEach(markTonic); setControls([
+        {label:"&#9654; Hear all the Do's", accent:true, onClick:async()=>{ await playSeq([60,72,84],{gap:160,dur:0.6}); }},
+        {label:"Play the 7 in order", onClick:async()=>{ await playSeq([60,62,64,65,67,69,71,72],{gap:110,dur:0.5,showSyl:true}); }}
+      ]); },
+      onKey(m){ if((m%12)===0){ setStatus("Find Do","That's a Do! Same note, different height. "+cheer(),"ok"); } else { setStatus("Find Do","That one is "+solf(m)+". Do sits left of the two black keys.",null);} }
+    })}
+  },
+  {
+    n:2, title:"The staircase", sub:"Do Re Mi Fa Sol La Si Do — the major scale",
+    body:`
+      <p class="lead">Play Do, then every white key up to the next Do. That rising line &mdash; <b>Do Re Mi Fa Sol La Si Do</b> &mdash; is called the <b>major scale</b>. It's the sound of &ldquo;happy&rdquo; and it's the home base of thousands of songs.</p>
+      <h4>Why it matters for playing by ear</h4>
+      <p>Almost every simple melody uses <em>only these notes</em>. If you can play the staircase smoothly, your fingers already know where every note of the song will be. You're not hunting the whole keyboard &mdash; just these seven.</p>
+      <div class="callout"><b>Feel it:</b> Play it up, then back down. Notice how the top Do sounds like the bottom Do &mdash; same note, twice as high. That &ldquo;same but higher&rdquo; feeling is called an <b>octave</b>.</div>`,
+    game:{label:"Play the scale", meta:"Play along until it's smooth in both directions.", make:()=>exGuided([60,62,64,65,67,69,71,72,71,69,67,65,64,62,60],{tag:"The scale",intro:"Play Do Re Mi Fa Sol La Si Do, up and down.",gap:60,dur:0.42,showSyl:true})}
+  },
+  {
+    n:3, title:"Match one note", sub:"Your first real ear-training",
+    body:`
+      <p class="lead">Now we start training the ear itself. I'll play a single note from the scale. Your job: find that <em>same</em> note on the keys.</p>
+      <h4>How to actually do it</h4>
+      <ul>
+        <li>Play a <b>Do</b> first to give your ear an anchor.</li>
+        <li>Hum the note I played. Is it near Do, or far above?</li>
+        <li>Walk up the scale &mdash; Do, Re, Mi &mdash; until your hum and the key agree.</li>
+      </ul>
+      <p>Wrong guesses are the practice, not a failure. Each one tunes your ear a little more.</p>`,
+    game:{label:"Start matching", meta:"I play a note; you find it. Wrong guess tells you higher or lower.", make:()=>exMatch([60,62,64,65,67,69,71,72])}
+  },
+  {
+    n:4, title:"Steps and skips", sub:"The smallest jumps: seconds and thirds",
+    body:`
+      <p class="lead">Melodies move by <b>jumps</b> between notes. The two most common are tiny: a <b>step</b> to the very next note (Do&rarr;Re), and a <b>skip</b> that hops over one (Do&rarr;Mi).</p>
+      <h4>Learn the feel</h4>
+      <ul>
+        <li>A <b>step</b> sounds smooth and close &mdash; like walking.</li>
+        <li>A <b>skip</b> sounds a little brighter, a small leap &mdash; the first two notes of a lullaby.</li>
+      </ul>
+      <div class="callout">This is the heart of playing by ear: you don't need to name notes, you need to feel <b>how far</b> the melody jumped &mdash; then move your hand that far.</div>`,
+    game:{label:"Train steps & skips", meta:"I give you a starting note, then jump. You play where it landed.", make:()=>exInterval([60,62,64,65,67],[2,3,4],"Steps & skips")}
+  },
+  {
+    n:5, title:"The strong jumps", sub:"Fourths, fifths, and the octave",
+    body:`
+      <p class="lead">Bigger jumps have a strong, recognizable character. Two are everywhere in music:</p>
+      <ul>
+        <li><b>The fourth</b> (Do&rarr;Fa) &mdash; the opening of &ldquo;Here Comes the Bride.&rdquo;</li>
+        <li><b>The fifth</b> (Do&rarr;Sol) &mdash; open and heroic, the start of &ldquo;Twinkle&rdquo; (Do to Sol).</li>
+        <li><b>The octave</b> (Do&rarr;Do) &mdash; same note, leaping a whole staircase up, like &ldquo;Some&shy;where&rdquo; in Over the Rainbow.</li>
+      </ul>
+      <p>Tie each jump to a song you know. Then when you hear that jump in a new tune, your ear shouts the song &mdash; and your hand knows the distance.</p>`,
+    game:{label:"Train the big jumps", meta:"Fourths, fifths and octaves from a starting note.", make:()=>exInterval([60,62,64,65,67],[5,7,12],"Strong jumps")}
+  },
+  {
+    n:6, title:"Up, down, or same", sub:"Follow the shape before the distance",
+    body:`
+      <p class="lead">Before worrying about exactly how far, get fast at the simplest question: did the melody go <b>up</b>, go <b>down</b>, or <b>stay</b>? This shape &mdash; the <em>contour</em> &mdash; is half of playing by ear.</p>
+      <h4>Why start here</h4>
+      <p>If you can trace a tune's ups and downs, you can already sketch it on the keys. The exact notes get filled in from the jumps you learned on Days 4 and 5. Shape first, detail second.</p>
+      <div class="callout"><b>Do this all day:</b> hum any song in your head and draw its shape in the air with your hand. You're doing real ear-training with no instrument at all.</div>`,
+    game:{label:"Train direction", meta:"Two notes &mdash; answer up, down, or same.", make:()=>exDirection()}
+  },
+  {
+    n:7, title:"Your first songs", sub:"Play a real tune back, by ear",
+    body:`
+      <p class="lead">Time to put it together on real music. I'll play a short, famous tune. You echo it back one note at a time &mdash; using everything from the last three days: home note, shape, and jumps.</p>
+      <h4>The method for any melody</h4>
+      <ol style="padding-left:1.2em; margin:0 0 1em">
+        <li>Find the <b>first note</b> (often Do, or close to it).</li>
+        <li>Ask: does the next note step, skip, or jump? Up or down?</li>
+        <li>Move your hand that far, and check it against your ear.</li>
+      </ol>
+      <p>Slow is fine. Every song you love was learned one jump at a time.</p>`,
+    game:{label:"Echo a tune", meta:"Twinkle, Mary's Lamb, Frère Jacques, Ode to Joy.", make:()=>exEcho(SONGS)}
+  },
+  {
+    n:8, title:"Notes that agree", sub:"Chords — for the left hand",
+    body:`
+      <p class="lead">On the organ your left hand can hold notes together. Three notes stacked in skips &mdash; like <b>Do&ndash;Mi&ndash;Sol</b> &mdash; make a <b>chord</b>. It's the warm backing under a melody.</p>
+      <h4>The three you'll use most</h4>
+      <ul>
+        <li><b>Do major</b> (Do&ndash;Mi&ndash;Sol) &mdash; home, resolved.</li>
+        <li><b>Sol major</b> (Sol&ndash;Si&ndash;Re) &mdash; tension, wants to go home.</li>
+        <li><b>Fa major</b> (Fa&ndash;La&ndash;Do) &mdash; a gentle step away.</li>
+      </ul>
+      <div class="callout">Those three chords alone can back an astonishing number of songs. When something sounds &ldquo;unfinished,&rdquo; it usually wants to return to <b>Do major</b> &mdash; home.</div>`,
+    game:{label:"Build chords", meta:"Play all the notes of the named chord together.", make:()=>exChord(TRIADS)}
+  },
+  {
+    n:9, title:"Find home", sub:"Hear which note a song rests on",
+    body:`
+      <p class="lead">Every song has a <b>home note</b> &mdash; the one it keeps returning to, the note where a tune feels finished. Nine times out of ten, that home is <b>Do</b>, and finding it tells you the whole set of notes the song will use.</p>
+      <h4>How to feel home</h4>
+      <p>Play a phrase, then try to sing the note that would end it comfortably. That resting note is home. Once you know home, you know which Do to start from &mdash; and the rest is the jumps you've trained.</p>
+      <div class="callout"><b>This is the master key:</b> find home, and you've found the song's whole neighborhood of notes. Everything you learned now points at the right keys.</div>`,
+    game:{label:"Find the home note", meta:"Hear a phrase, then play the note it wants to rest on.", make:()=>exHome()}
+  },
+  {
+    n:10, title:"Put it all together", sub:"Hear it, find it, play it",
+    body:`
+      <p class="lead">This is the whole thing, in order. You now have every piece &mdash; today you just run the routine on a fresh tune, start to finish.</p>
+      <h4>Your by-ear routine</h4>
+      <ol style="padding-left:1.2em; margin:0 0 1em">
+        <li><b>Find home</b> &mdash; hum the tune, find its resting note (Day 9).</li>
+        <li><b>Find the first note</b> from home (Day 3).</li>
+        <li><b>Follow the shape</b> &mdash; up, down, same (Day 6).</li>
+        <li><b>Measure each jump</b> &mdash; step, skip, or leap (Days 4&ndash;5).</li>
+        <li><b>Add a chord</b> under the resting points if you like (Day 8).</li>
+      </ol>
+      <p>Echo the tune below, then &mdash; the real graduation &mdash; pick a song stuck in your head and find it on the keys with no help at all. That's playing what you hear.</p>`,
+    game:{label:"The full routine", meta:"Echo a short tune using the whole method.", make:()=>exEcho(SHORT_SONGS)}
+  },
+];
+
+/* ================= RENDER DAYS ================= */
+const dayList=document.getElementById("dayList");
+const STORE="organ_by_ear_v1";
+let progress = loadProgress();
+function loadProgress(){ try{ return JSON.parse(localStorage.getItem(STORE))||{done:[]}; }catch(e){ return {done:[]}; } }
+function saveProgress(){ try{ localStorage.setItem(STORE, JSON.stringify(progress)); }catch(e){} }
+
+DAYS.forEach(d=>{
+  const det=document.createElement("details");
+  det.className="day"; det.dataset.n=d.n;
+  det.innerHTML=`
+    <summary class="day-summary">
+      <span class="day-num">DAY&nbsp;${String(d.n).padStart(2,"0")}</span>
+      <span class="day-titles"><h3>${d.title}</h3><span class="sub">${d.sub}</span></span>
+      <span class="day-check">&#10003;</span>
+      <span class="day-chevron">&#9662;</span>
+    </summary>
+    <div class="day-body">
+      ${d.body}
+      <div class="game-launch">
+        <span class="g-meta">${d.game.meta}</span>
+        <button class="btn btn-primary launch-btn">&#9654;&nbsp; ${d.game.label}</button>
+        <button class="mark-done">Mark day done</button>
+      </div>
+    </div>`;
+  dayList.appendChild(det);
+
+  det.querySelector(".launch-btn").addEventListener("click",()=>{ Organ.resume(); activateExercise(d.game.make()); });
+  det.querySelector(".mark-done").addEventListener("click",()=>{
+    const i=progress.done.indexOf(d.n);
+    if(i>=0){ progress.done.splice(i,1); } else { progress.done.push(d.n); flash("Day "+d.n+" complete — well done."); }
+    saveProgress(); refreshProgress();
+  });
+  det.addEventListener("toggle",()=>{ det.classList.toggle("open",det.open);
+    if(det.open) DAYS.forEach(o=>{ if(o.n!==d.n){ const el=dayList.querySelector(`.day[data-n="${o.n}"]`); } }); });
+});
+
+function refreshProgress(){
+  const done=progress.done.length;
+  document.getElementById("progressLabel").textContent=done+" / 10";
+  document.getElementById("progressFill").style.width=(done/10*100)+"%";
+  DAYS.forEach(d=>{ const el=dayList.querySelector(`.day[data-n="${d.n}"]`); el.classList.toggle("done",progress.done.includes(d.n)); });
+  document.getElementById("finish").hidden = done<10;
+}
+refreshProgress();
+
+document.getElementById("resetBtn").addEventListener("click",()=>{ progress={done:[]}; saveProgress(); refreshProgress(); window.scrollTo({top:0,behavior:"smooth"}); });
+
+/* ================= HERO ACTIONS ================= */
+document.getElementById("heroPlay").addEventListener("click", async e=>{
+  Organ.resume(); e.target.disabled=true;
+  await playSeq([60,62,64,65,67,69,71,72],{gap:110,dur:0.5,showSyl:true});
+  e.target.disabled=false;
+});
+document.getElementById("heroStart").addEventListener("click",()=>{
+  const first=dayList.querySelector('.day[data-n="1"]'); first.open=true; first.classList.add("open");
+  first.scrollIntoView({behavior:"smooth",block:"start"});
+});
+
+/* keep only one day open at a time for focus */
+dayList.addEventListener("toggle", e=>{
+  const t=e.target;
+  if(t.matches(".day") && t.open){
+    dayList.querySelectorAll(".day[open]").forEach(o=>{ if(o!==t) o.open=false; });
+  }
+}, true);
+
+/* ================= THEME TOGGLE ================= */
+const themeBtn=document.getElementById("themeBtn");
+function currentTheme(){ return document.documentElement.getAttribute("data-theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"); }
+themeBtn.addEventListener("click",()=>{
+  const next = currentTheme()==="dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme",next);
+  themeBtn.innerHTML = next==="dark" ? "&#9788;" : "&#9789;";
+  try{ localStorage.setItem("organ_theme",next); }catch(e){}
+});
+(function initTheme(){ try{ const t=localStorage.getItem("organ_theme"); if(t){ document.documentElement.setAttribute("data-theme",t); themeBtn.innerHTML = t==="dark"?"&#9788;":"&#9789;"; } }catch(e){} })();
+
+/* ================= CONSOLE OPEN/COLLAPSE ================= */
+const consoleEl=document.getElementById("console");
+const kbToggle=document.getElementById("kbToggle");
+const kbToggleLabel=document.getElementById("kbToggleLabel");
+let kbOpen=false;
+function setKb(open){
+  kbOpen=open;
+  consoleEl.classList.toggle("collapsed",!open);
+  if(open) consoleEl.classList.add("was-open");
+  kbToggle.setAttribute("aria-expanded", open?"true":"false");
+  kbToggleLabel.textContent = open ? "Hide the keyboard" : "Open the keyboard & games";
+  try{ localStorage.setItem("organ_kb", open?"1":"0"); }catch(e){}
+  requestAnimationFrame(syncConsoleHeight);
+}
+function openKb(){ if(!kbOpen) setKb(true); }
+kbToggle.addEventListener("click",()=>setKb(!kbOpen));
+(function initKb(){ let v; try{ v=localStorage.getItem("organ_kb"); }catch(e){} setKb(v==="1"); })();
+
+/* ================= CONSOLE HEIGHT -> body padding ================= */
+function syncConsoleHeight(){ const h=consoleEl.offsetHeight; document.documentElement.style.setProperty("--console-h",(h+8)+"px"); }
+window.addEventListener("resize",syncConsoleHeight);
+new ResizeObserver(syncConsoleHeight).observe(consoleEl);
+syncConsoleHeight();
+</script>
+</body>
+</html>
