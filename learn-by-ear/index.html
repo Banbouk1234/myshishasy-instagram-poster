@@ -167,6 +167,42 @@ header.top{
 
 footer.foot{text-align:center; padding:40px 24px 30px; color:var(--ink-faint); font-size:.85rem; border-top:1px solid var(--line-soft); margin-top:30px}
 
+/* ============ TWO WAYS / STICKERS ============ */
+.two-ways{margin-top:16px}
+.two-ways h2{font-size:1.5rem; margin-bottom:14px}
+.ways{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+@media (max-width:600px){ .ways{grid-template-columns:1fr} }
+.way{display:flex; gap:12px; align-items:flex-start; background:var(--bg-sunk); border:1px solid var(--line-soft); border-radius:14px; padding:14px 16px}
+.way b{font-size:1rem}
+.way p{margin:4px 0 0}
+.way-ico{font-size:1.4rem; line-height:1.2; flex:none}
+
+.stickers{margin:56px auto}
+.stickers-head{text-align:center; margin-bottom:24px}
+.stickers-head h2{font-size:clamp(1.9rem,5vw,2.7rem); margin-top:6px}
+.stickers-head p{color:var(--ink-soft); max-width:52ch; margin:12px auto 0}
+.place-guide{background:var(--bg-raised); border:1px solid var(--line); border-radius:18px; padding:22px 26px; max-width:620px; margin:0 auto 22px}
+.place-guide h4{font-family:"Nunito Sans",sans-serif; font-weight:800; font-size:.78rem; letter-spacing:.14em; text-transform:uppercase; color:var(--brass); margin:0 0 10px}
+.place-guide ol{margin:0 0 6px; padding-left:1.2em}
+.place-guide li{margin:.4em 0}
+.sticker-actions{display:flex; align-items:center; gap:14px; flex-wrap:wrap; justify-content:center; margin-bottom:26px}
+.sticker-actions .tiny{color:var(--ink-faint); flex-basis:100%; text-align:center; margin:2px 0 0}
+
+.print-title{display:none}
+.sticker-strip{
+  display:flex; flex-wrap:wrap; gap:8px; justify-content:center; max-width:760px; margin:0 auto;
+  padding:20px; background:var(--bg-raised); border:1px solid var(--line); border-radius:18px;
+}
+.sticker{
+  width:60px; height:78px; border:1px dashed var(--line); border-radius:8px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  background:var(--white-key); color:#3a2708;
+}
+.sticker .s-solf{font-family:"Cormorant",serif; font-weight:700; font-size:1.5rem; line-height:1}
+.sticker .s-letter{font-family:"Space Mono",monospace; font-size:.62rem; opacity:.7}
+.sticker.is-do{background:linear-gradient(180deg,var(--glow-soft),var(--glow)); border-style:solid; border-color:var(--brass)}
+.sticker.is-do::before{content:""; width:7px; height:7px; border-radius:50%; background:#4a3208; margin-bottom:2px}
+
 /* ============ KEYBOARD CONSOLE ============ */
 .console{
   position:fixed; left:0; right:0; bottom:0; z-index:50;
@@ -253,6 +289,22 @@ footer.foot{text-align:center; padding:40px 24px 30px; color:var(--ink-faint); f
 .flash.show{opacity:1; transform:translateX(-50%) translateY(-6px)}
 
 @media (prefers-reduced-motion:reduce){ *{transition:none!important; animation:none!important} }
+
+/* ============ PRINT: sticker sheet only ============ */
+@media print{
+  header.top, .hero, .idea, .days, .finish, footer.foot, .console, .flash{ display:none !important; }
+  .stickers-head, .place-guide, .sticker-actions, .no-print{ display:none !important; }
+  html, body{ padding:0 !important; margin:0 !important; background:#fff !important; color:#000 !important; }
+  main{ margin:0; }
+  #stickerSheet{ display:block !important; padding:8mm; margin:0; }
+  .print-title{ display:block; font-family:"Nunito Sans",Arial,sans-serif; font-size:10pt; color:#000; margin:0 0 6mm; }
+  .sticker-strip{ display:flex !important; flex-wrap:wrap; gap:2mm; max-width:none; margin:0; padding:0; background:#fff !important; border:0; border-radius:0; justify-content:flex-start; }
+  .sticker{ width:22mm; height:13mm; border:0.3mm solid #888; border-radius:1.5mm; background:#fff !important; color:#000 !important; page-break-inside:avoid; }
+  .sticker .s-solf{ font-size:15pt; color:#000; }
+  .sticker .s-letter{ font-size:6pt; opacity:1; color:#333; }
+  .sticker.is-do{ background:#fff !important; border-color:#000; border-width:0.5mm; }
+  .sticker.is-do::before{ background:#000; }
+}
 </style>
 </head>
 <body class="solf-only">
@@ -271,7 +323,7 @@ footer.foot{text-align:center; padding:40px 24px 30px; color:var(--ink-faint); f
 
 <main>
   <section class="hero wrap">
-    <span class="eyebrow">A 10-day path for organ players</span>
+    <span class="eyebrow">A 10-day path &middot; piano, organ, or right here</span>
     <h1>Play What<br>You <em>Hear</em></h1>
     <p class="lede">You already know how to press the keys. Now let&rsquo;s teach your ear to lead your hands.</p>
 
@@ -296,7 +348,28 @@ footer.foot{text-align:center; padding:40px 24px 30px; color:var(--ink-faint); f
     <div class="idea">
       <h2>The whole secret, in one breath</h2>
       <p>When you noticed it&rsquo;s <b>just Do to Si</b> &mdash; seven notes that repeat &mdash; you found the real thing. Almost every song you love lives inside those seven notes. Nothing more is hiding.</p>
-      <p class="tiny">Playing by ear isn&rsquo;t a gift some people are born with. It&rsquo;s three small skills stacked together: knowing where the notes are, hearing how far one note jumps to the next, and trusting your hand to follow. We&rsquo;ll build them one day at a time &mdash; and you&rsquo;ll practice each one on the keyboard right here on this page.</p>
+      <p class="tiny">Playing by ear isn&rsquo;t a gift some people are born with. It&rsquo;s three small skills stacked together: knowing where the notes are, hearing how far one note jumps to the next, and trusting your hand to follow. We&rsquo;ll build them one day at a time &mdash; practice each one on the keyboard right here, or on your own piano or organ.</p>
+    </div>
+
+    <div class="idea two-ways">
+      <h2>Two ways to practice</h2>
+      <div class="ways">
+        <div class="way">
+          <span class="way-ico">&#128421;</span>
+          <div>
+            <b>Right here in the browser</b>
+            <p class="tiny">Open the keyboard at the bottom and play with your mouse, your finger, or the computer keys <b>A&ndash;L</b>. Nothing to set up.</p>
+          </div>
+        </div>
+        <div class="way">
+          <span class="way-ico">&#127929;</span>
+          <div>
+            <b>On a real piano or organ</b>
+            <p class="tiny">The notes sit in the same place on every keyboard. To make yours match the screen, pop small <b>Do&ndash;Re&ndash;Mi stickers</b> on the white keys &mdash; then your fingers and your eyes learn the same map.</p>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="openStickers" style="margin-top:18px">&#127991;&nbsp; Get sticker labels for your keys</button>
     </div>
   </div>
 
@@ -314,11 +387,38 @@ footer.foot{text-align:center; padding:40px 24px 30px; color:var(--ink-faint); f
     <p>Ten days ago it was a mystery. Now you can find home, follow the jumps, and let a melody out through your fingers. Keep a song stuck in your head? Go find it on the keys.</p>
     <button class="btn btn-ghost" id="resetBtn" style="margin-top:14px">Start the ten days again</button>
   </section>
+
+  <section class="stickers wrap" id="stickerSheet" hidden>
+    <div class="stickers-head">
+      <span class="eyebrow">Make your piano match the screen</span>
+      <h2>Sticker labels for your keys</h2>
+      <p>Print this page (or copy the labels by hand onto little bits of tape) and stick one under each <b>white</b> key. The brass ones marked with a dot are <b>Do</b> &mdash; your home note.</p>
+    </div>
+
+    <div class="place-guide">
+      <h4>Where each one goes</h4>
+      <ol>
+        <li>Find <b>Do</b>: the white key just to the <em>left</em> of every pair of two black keys.</li>
+        <li>Starting there, label the white keys in order: <b>Do&nbsp;Re&nbsp;Mi&nbsp;Fa&nbsp;Sol&nbsp;La&nbsp;Si</b>, then Do again.</li>
+        <li>The pattern repeats up and down the whole keyboard &mdash; the labels below give you three octaves. Print more than once for a full piano.</li>
+      </ol>
+      <p class="tiny no-print">Stick them <b>below</b> the front edge of each key, or low on the key face, so your fingers don&rsquo;t cover them while you play. Tip: painter&rsquo;s / washi tape peels off cleanly and won&rsquo;t mark the keys.</p>
+    </div>
+
+    <div class="sticker-actions no-print">
+      <button class="btn btn-primary" id="printStickers">&#128424;&nbsp; Print these labels</button>
+      <button class="btn btn-ghost" id="closeStickers">Close</button>
+      <span class="tiny" id="printHint">Opens your browser&rsquo;s print dialog. If nothing opens, take a screenshot of the strip below instead.</span>
+    </div>
+
+    <div class="print-title" aria-hidden="true">Do&ndash;Re&ndash;Mi key stickers &mdash; cut along the lines and stick one under each white key</div>
+    <div class="sticker-strip" id="stickerStrip" aria-label="Printable Do Re Mi key labels"></div>
+  </section>
 </main>
 
 <footer class="foot">
-  Built for one organ player who wanted to understand the music under their hands. <br>
-  Sound is made live in your browser &mdash; headphones make the ear-training clearer.
+  Built for one keyboard player who wanted to understand the music under their hands. <br>
+  Practice on the keyboard here, or on any piano or organ &mdash; the sound is made live in your browser, and headphones make the ear-training clearer.
 </footer>
 
 <!-- ============ THE CONSOLE ============ -->
@@ -872,7 +972,7 @@ const DAYS=[
   {
     n:8, title:"Notes that agree", sub:"Chords — for the left hand",
     body:`
-      <p class="lead">On the organ your left hand can hold notes together. Three notes stacked in skips &mdash; like <b>Do&ndash;Mi&ndash;Sol</b> &mdash; make a <b>chord</b>. It's the warm backing under a melody.</p>
+      <p class="lead">On a piano or organ your left hand can hold notes together. Three notes stacked in skips &mdash; like <b>Do&ndash;Mi&ndash;Sol</b> &mdash; make a <b>chord</b>. It's the warm backing under a melody.</p>
       <h4>The three you'll use most</h4>
       <ul>
         <li><b>Do major</b> (Do&ndash;Mi&ndash;Sol) &mdash; home, resolved.</li>
@@ -955,6 +1055,26 @@ function refreshProgress(){
 refreshProgress();
 
 document.getElementById("resetBtn").addEventListener("click",()=>{ progress={done:[]}; saveProgress(); refreshProgress(); window.scrollTo({top:0,behavior:"smooth"}); });
+
+/* ================= STICKER LABELS ================= */
+(function buildStickers(){
+  const strip=document.getElementById("stickerStrip");
+  const seq=[["Do","C"],["Re","D"],["Mi","E"],["Fa","F"],["Sol","G"],["La","A"],["Si","B"]];
+  const labels=[]; for(let oct=0;oct<3;oct++) seq.forEach(s=>labels.push(s)); labels.push(["Do","C"]);
+  strip.innerHTML = labels.map(([s,l])=>
+    `<div class="sticker${s==="Do"?" is-do":""}"><span class="s-solf">${s}</span><span class="s-letter">${l}</span></div>`
+  ).join("");
+})();
+const stickerSheet=document.getElementById("stickerSheet");
+function showStickers(){ stickerSheet.hidden=false; stickerSheet.scrollIntoView({behavior:"smooth",block:"start"}); }
+document.getElementById("openStickers").addEventListener("click",showStickers);
+document.getElementById("closeStickers").addEventListener("click",()=>{ stickerSheet.hidden=true; window.scrollTo({top:0,behavior:"smooth"}); });
+document.getElementById("printStickers").addEventListener("click",()=>{
+  stickerSheet.hidden=false;
+  const hint=document.getElementById("printHint");
+  try{ window.print(); }
+  catch(e){ if(hint){ hint.textContent="Printing is blocked here — take a screenshot of the strip below instead, or open this page in your own browser to print."; } }
+});
 
 /* ================= HERO ACTIONS ================= */
 document.getElementById("heroPlay").addEventListener("click", async e=>{
