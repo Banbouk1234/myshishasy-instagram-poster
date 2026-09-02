@@ -47,6 +47,7 @@ def get_next_image(posted):
     remaining = [f for f in images if f not in posted]
     if not remaining:
         log("All images posted. Resetting cycle.")
+        posted.clear()
         remaining = images
     return remaining[0] if remaining else None
 
