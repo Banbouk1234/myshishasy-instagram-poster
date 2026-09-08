@@ -256,6 +256,8 @@
       <button class="btn" id="btnPull">⬇ Load from cloud</button>
       <button class="btn primary" id="btnPush">⬆ Save to cloud</button>
     </div>
+    <button class="btn" id="btnCopyLink" style="margin-top:10px;width:100%">🔗 Copy my link for phone / Sara</button>
+    <p class="hint">Open that link on any device to see everything instantly — no setup needed. (Anyone with this exact link can see your list, so only share it with people you trust.)</p>
 
     <div class="divider"></div>
     <div class="btnrow">
@@ -802,9 +804,29 @@ async function handleHash(){
   }
 }
 
+/* ---- Personal sign-in link (#k=passphrase) ----------------------- */
+function readKeyFromUrl(){
+  const m = (location.hash + "&" + location.search).match(/[#?&]k=([^&]+)/);
+  if(!m) return;
+  cfg.pass = decodeURIComponent(m[1].replace(/\+/g," "));
+  if(!cfg.repo) cfg.repo = "Banbouk1234/myshishasy-instagram-poster";
+  saveCfg();
+  try{ history.replaceState(null, "", location.pathname); }catch(e){}
+}
+function copyDeviceLink(){
+  closeSettingsInputs();
+  if(!cfg.pass){ toast("Set your passphrase first"); return; }
+  const link = location.origin + location.pathname + "#k=" + encodeURIComponent(cfg.pass);
+  const done = ()=>toast("Link copied — open it on your other device to see everything");
+  if(navigator.clipboard && navigator.clipboard.writeText)
+    navigator.clipboard.writeText(link).then(done, ()=>prompt("Copy this link:", link));
+  else prompt("Copy this link:", link);
+}
+
 /* ---- Wire up ------------------------------------------------------ */
 function init(){
   load();
+  readKeyFromUrl();
   $("#btnAdd").onclick=()=>openEdit(null);
   $("#btnCancel").onclick=closeEdit;
   $("#btnSave").onclick=saveEdit;
@@ -816,6 +838,7 @@ function init(){
   $("#btnExport").onclick=exportBackup;
   $("#btnPush").onclick=()=>{ closeSettingsInputs(); pushCloud(false); };
   $("#btnPull").onclick=()=>{ closeSettingsInputs(); pullCloud(false); };
+  $("#btnCopyLink").onclick=copyDeviceLink;
   [$("#editScrim"),$("#setScrim")].forEach(s=>s.onclick=e=>{ if(e.target===s) s.classList.remove("open"); });
   renderAll();
   handleHash();
