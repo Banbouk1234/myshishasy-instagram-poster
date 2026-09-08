@@ -35,7 +35,8 @@ DUBAI_TZ      = timezone(timedelta(hours=4))   # Asia/Dubai (no DST)
 PASSPHRASE = os.environ.get("VAULT_PASSPHRASE", "")
 GMAIL_USER = os.environ.get("GMAIL_USER", "")
 GMAIL_PASS = os.environ.get("GMAIL_APP_PASSWORD", "")
-APP_URL    = os.environ.get("APP_URL", "").rstrip("/")
+APP_URL    = (os.environ.get("APP_URL")
+              or "https://banbouk1234.github.io/myshishasy-instagram-poster/renewals").rstrip("/")
 DRY_RUN    = os.environ.get("DRY_RUN", "") == "1"
 
 
