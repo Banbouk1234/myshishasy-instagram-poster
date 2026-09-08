@@ -1,0 +1,34 @@
+{
+  "_comment": "This is ONLY an example of the data shape. The real data lives in vault.enc (encrypted). Do not put real dates here in a public repo.",
+  "version": 1,
+  "people": [
+    { "id": "mohanad", "name": "Mohanad", "email": "mohanad@banbouk.com", "phone": "+9715XXXXXXXX", "waKey": "optional CallMeBot key" },
+    { "id": "sara",    "name": "Sara 🍒", "email": "", "phone": "", "waKey": "" }
+  ],
+  "items": [
+    {
+      "id": "example1",
+      "ownerId": "mohanad",
+      "title": "Mulkiya – Range Rover",
+      "category": "vehicle",
+      "expiry": "2026-03-15",
+      "recur": 12,
+      "reminderDays": [10, 1, 0],
+      "notes": "Need: valid insurance + pass inspection + clear all fines.",
+      "status": "active",
+      "history": []
+    },
+    {
+      "id": "example2",
+      "ownerId": "mohanad",
+      "title": "Trade licence",
+      "category": "company",
+      "expiry": "2026-05-01",
+      "recur": 12,
+      "reminderDays": [30, 10, 1, 0],
+      "notes": "Need valid Ejari + no outstanding fees.",
+      "status": "active",
+      "history": []
+    }
+  ]
+}
