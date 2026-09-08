@@ -269,9 +269,13 @@ def main():
                 log(f"   whatsapp failed for '{item['title']}' -> {phone}: {e}")
 
         if delivered:
-            state["sent"][key] = datetime.now(DUBAI_TZ).isoformat()
             sent_now += 1
-            log(f" - SENT '{item['title']}' via {', '.join(delivered)} ({subject})")
+            if DRY_RUN:
+                # a test run must never consume a real reminder
+                log(f" - WOULD SEND '{item['title']}' via {', '.join(delivered)} ({subject})")
+            else:
+                state["sent"][key] = datetime.now(DUBAI_TZ).isoformat()
+                log(f" - SENT '{item['title']}' via {', '.join(delivered)} ({subject})")
         else:
             log(f" - FAILED '{item['title']}' — no channel delivered")
 
