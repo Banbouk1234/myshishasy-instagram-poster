@@ -29,7 +29,7 @@ HERE          = Path(__file__).parent
 VAULT_FILE    = HERE / "data" / "vault.enc"
 STATE_FILE    = HERE / "data" / "reminders_state.json"
 DEFAULT_DAYS  = [10, 1, 0]        # remind 10 days before, 1 day before, same day
-OVERDUE_MAX   = 30                # keep nagging up to 30 days past expiry
+OVERDUE_MAX   = 365               # once expired, keep emailing every day (up to a year) until renewed
 DUBAI_TZ      = timezone(timedelta(hours=4))   # Asia/Dubai (no DST)
 
 PASSPHRASE = os.environ.get("VAULT_PASSPHRASE", "")

@@ -268,6 +268,22 @@
   </div>
 </div>
 
+<!-- Renew confirmation -->
+<div class="scrim" id="renewScrim">
+  <div class="sheet">
+    <div class="grip"></div>
+    <h2 id="renewTitle">Did you renew it?</h2>
+    <p class="hint" id="renewCur" style="margin-top:-6px"></p>
+    <label class="f">New expiry date</label>
+    <input id="rNewDate" type="date" />
+    <p class="hint">This becomes the next date you'll be reminded about. Leave empty to just mark it done and remove it from the list.</p>
+    <div class="btnrow">
+      <button class="btn" id="rCancel">Not yet</button>
+      <button class="btn primary" id="rConfirm">Yes, I renewed it ✓</button>
+    </div>
+  </div>
+</div>
+
 <!-- Guided setup wizard -->
 <div class="scrim" id="wizScrim">
   <div class="sheet">
@@ -517,7 +533,7 @@ function renderList(){
   });
   list.innerHTML=html;
   list.querySelectorAll("[data-edit]").forEach(el=>el.onclick=()=>openEdit(el.getAttribute("data-edit")));
-  list.querySelectorAll("[data-renew]").forEach(el=>el.onclick=()=>markRenewed(el.getAttribute("data-renew")));
+  list.querySelectorAll("[data-renew]").forEach(el=>el.onclick=()=>openRenew(el.getAttribute("data-renew")));
 }
 function card(i){
   const d=daysUntil(i.expiry);
@@ -610,19 +626,34 @@ function saveEdit(){
   else{ vault.items.push({id:uid(), status:"active", createdAt:todayISO(), history:[], ...data}); }
   closeEdit(); renderAll(); pushCloud(true); toast("Saved");
 }
-function markRenewed(id){
-  const i=vault.items.find(x=>x.id===id); if(!i) return;
-  if(!i.expiry || isNaN(new Date(i.expiry+"T00:00:00"))){ toast("Add the expiry date first"); openEdit(id); return; }
-  const recur=Number(i.recur||0);
-  i.history=i.history||[]; i.history.push({renewedOn:todayISO(), wasExpiry:i.expiry});
-  if(recur>0){
-    // roll forward from the later of today or old expiry
-    let base=i.expiry; while(daysUntil(base)<0) base=addMonths(base,recur);
-    if(base===i.expiry) base=addMonths(i.expiry,recur);
-    i.expiry=base; toast("Renewed ✓ Next: "+fmtDate(i.expiry));
-  }else{
-    i.status="archived"; toast("Marked done ✓");
-  }
+/* ---- Renew confirmation ------------------------------------------ */
+let renewingId = null;
+function suggestNextDate(i){
+  const recur = Number(i.recur||0);
+  if(recur<=0) return "";
+  let base = i.expiry && !isNaN(new Date(i.expiry+"T00:00:00")) ? i.expiry : todayISO();
+  while(daysUntil(base) < 0) base = addMonths(base, recur);   // skip past any overdue cycles
+  if(base === i.expiry) base = addMonths(i.expiry, recur);    // renewing early → next cycle
+  return base;
+}
+function openRenew(id){
+  const i = vault.items.find(x=>x.id===id); if(!i) return;
+  renewingId = id;
+  $("#renewTitle").textContent = "Did you renew " + i.title + "?";
+  $("#renewCur").textContent = i.expiry ? ("Current expiry: " + fmtDate(i.expiry)) : "No date set yet";
+  $("#rNewDate").value = suggestNextDate(i);
+  $("#renewScrim").classList.add("open");
+}
+function confirmRenew(){
+  const i = vault.items.find(x=>x.id===renewingId);
+  $("#renewScrim").classList.remove("open");
+  if(!i){ renewingId=null; return; }
+  const nd = $("#rNewDate").value;
+  i.history = i.history || [];
+  i.history.push({renewedOn: todayISO(), wasExpiry: i.expiry});
+  if(nd){ i.expiry = nd; i.status = "active"; toast("Renewed ✓ Next: " + fmtDate(nd)); }
+  else  { i.status = "archived"; toast("Marked done ✓"); }
+  renewingId = null;
   renderAll(); pushCloud(true);
 }
 
@@ -813,8 +844,8 @@ async function handleHash(){
   const h=location.hash;
   if(h.startsWith("#renew=")){
     const id=h.slice(7); location.hash="";
-    if(syncReady()){ await pullCloud(true); }
-    if(vault.items.find(x=>x.id===id)) markRenewed(id);
+    if(pullReady()){ await pullCloud(true); }
+    if(vault.items.find(x=>x.id===id)) openRenew(id);
     else toast("That item was already updated");
   }else if(h.startsWith("#snooze=")){
     location.hash=""; toast("Okay — I'll remind you again tomorrow ⏰");
@@ -860,7 +891,9 @@ function init(){
   $("#btnPush").onclick=()=>{ closeSettingsInputs(); pushCloud(false); };
   $("#btnPull").onclick=()=>{ closeSettingsInputs(); pullCloud(false); };
   $("#btnCopyLink").onclick=copyDeviceLink;
-  [$("#editScrim"),$("#setScrim")].forEach(s=>s.onclick=e=>{ if(e.target===s) s.classList.remove("open"); });
+  $("#rCancel").onclick=()=>{ $("#renewScrim").classList.remove("open"); renewingId=null; };
+  $("#rConfirm").onclick=confirmRenew;
+  [$("#editScrim"),$("#setScrim"),$("#renewScrim")].forEach(s=>s.onclick=e=>{ if(e.target===s) s.classList.remove("open"); });
   renderAll();
   handleHash();
   window.addEventListener("hashchange", handleHash);
