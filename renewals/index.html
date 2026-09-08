@@ -245,7 +245,7 @@
 
     <label class="f">GitHub repo (owner/name)</label>
     <input id="sRepo" placeholder="Banbouk1234/myshishasy-instagram-poster" />
-    <label class="f">Access token (fine-grained PAT, Contents: read &amp; write)</label>
+    <label class="f">Access token <span class="tag">(only needed to add/change items on this device — to just view, the passphrase alone is enough)</span></label>
     <input id="sToken" type="password" placeholder="github_pat_..." />
     <label class="f">Encryption passphrase <span class="tag">(also add this as the VAULT_PASSPHRASE secret)</span></label>
     <input id="sPass" type="password" placeholder="a secret phrase you & Sara share" />
@@ -387,7 +387,7 @@ async function decryptVault(b64str, pass){
 }
 
 /* ---- GitHub sync -------------------------------------------------- */
-function ghHeaders(){ return {Authorization:"Bearer "+cfg.token, Accept:"application/vnd.github+json"}; }
+function ghHeaders(){ const h={Accept:"application/vnd.github+json"}; if(cfg.token) h.Authorization="Bearer "+cfg.token; return h; }
 async function ghGet(){
   const r=await fetch(`https://api.github.com/repos/${cfg.repo}/contents/${VAULT_PATH}`,{headers:ghHeaders()});
   if(r.status===404) return {sha:null, content:null};
@@ -402,10 +402,11 @@ async function ghPut(contentStr, sha){
   if(!r.ok) throw new Error("GitHub write failed ("+r.status+")");
   return r.json();
 }
-function syncReady(){ return cfg.repo && cfg.token && cfg.pass; }
+function syncReady(){ return cfg.repo && cfg.token && cfg.pass; }   // needed to SAVE (write)
+function pullReady(){ return cfg.repo && cfg.pass; }               // enough to LOAD a public repo (read)
 
 async function pushCloud(silent){
-  if(!syncReady()){ if(!silent) toast("Fill repo, token & passphrase first"); return; }
+  if(!syncReady()){ if(!silent) toast("Add your access token in Settings to save changes"); return; }
   try{
     const cur=await ghGet();
     const encStr=await encryptVault(vault, cfg.pass);
@@ -415,7 +416,7 @@ async function pushCloud(silent){
   }catch(e){ if(!silent) toast("Sync error: "+e.message); }
 }
 async function pullCloud(silent){
-  if(!syncReady()){ if(!silent) toast("Fill repo, token & passphrase first"); return; }
+  if(!pullReady()){ if(!silent) toast("Enter the repo and passphrase first"); return; }
   try{
     const cur=await ghGet();
     if(!cur.content){ if(!silent) toast("Nothing in cloud yet — use Save"); return; }
@@ -819,7 +820,7 @@ function init(){
   renderAll();
   handleHash();
   window.addEventListener("hashchange", handleHash);
-  if(syncReady()) pullCloud(true);
+  if(pullReady()) pullCloud(true);
   else if(!vault.items.length && !location.hash && !localStorage.getItem("renewals.wizardDone")) openWizard();
 }
 function closeSettingsInputs(){
