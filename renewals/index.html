@@ -257,7 +257,7 @@
       <button class="btn primary" id="btnPush">⬆ Save to cloud</button>
     </div>
     <button class="btn" id="btnCopyLink" style="margin-top:10px;width:100%">🔗 Copy my link for phone / Sara</button>
-    <p class="hint">Open that link on any device to see everything instantly — no setup needed. (Anyone with this exact link can see your list, so only share it with people you trust.)</p>
+    <p class="hint">Open that link on any device to <b>view and edit</b> everything instantly — no setup. Anyone with this exact link can view and edit your list, so only share it with people you trust (like Sara). You can turn it off anytime by deleting the access token on GitHub.</p>
 
     <div class="divider"></div>
     <div class="btnrow">
@@ -407,12 +407,29 @@ async function ghPut(contentStr, sha){
 function syncReady(){ return cfg.repo && cfg.token && cfg.pass; }   // needed to SAVE (write)
 function pullReady(){ return cfg.repo && cfg.pass; }               // enough to LOAD a public repo (read)
 
+/* Union two lists by id so nobody's entries get lost when several
+   people edit. `into` is authoritative for shared ids; anything only
+   in `from` is appended. */
+function mergeById(into, from){
+  if(!Array.isArray(into) || !Array.isArray(from)) return;
+  const have = new Set(into.map(x=>x && x.id));
+  from.forEach(x=>{ if(x && !have.has(x.id)) into.push(x); });
+}
+function mergeInto(primary, other){          // primary wins conflicts; other fills gaps
+  if(!primary || !other) return;
+  primary.items = primary.items || [];  mergeById(primary.items, other.items || []);
+  primary.people = primary.people || []; mergeById(primary.people, other.people || []);
+}
+
 async function pushCloud(silent){
-  if(!syncReady()){ if(!silent) toast("Add your access token in Settings to save changes"); return; }
+  if(!syncReady()){ if(!silent) toast("This link is view-only — ask for an editing link to save"); return; }
   try{
     const cur=await ghGet();
-    const encStr=await encryptVault(vault, cfg.pass);
-    await ghPut(encStr, cur.sha);
+    if(cur.content){                          // merge the latest cloud copy in first
+      try{ mergeInto(vault, await decryptVault(cur.content, cfg.pass)); }catch(e){}
+    }
+    await ghPut(await encryptVault(vault, cfg.pass), cur.sha);
+    save(); renderAll();
     cfg.lastSync=new Date().toISOString(); saveCfg(); renderSyncState();
     if(!silent) toast("Saved to cloud ✓");
   }catch(e){ if(!silent) toast("Sync error: "+e.message); }
@@ -423,7 +440,7 @@ async function pullCloud(silent){
     const cur=await ghGet();
     if(!cur.content){ if(!silent) toast("Nothing in cloud yet — use Save"); return; }
     const obj=await decryptVault(cur.content, cfg.pass);
-    if(obj&&obj.people){ vault=obj; save(); renderAll(); }
+    if(obj&&obj.people){ mergeInto(obj, vault); vault=obj; save(); renderAll(); }  // keep unsynced local edits
     cfg.lastSync=new Date().toISOString(); saveCfg(); renderSyncState();
     if(!silent) toast("Loaded from cloud ✓");
   }catch(e){ if(!silent) toast("Load error: "+(e.message.includes("operation-specific")?"wrong passphrase?":e.message)); }
@@ -806,9 +823,12 @@ async function handleHash(){
 
 /* ---- Personal sign-in link (#k=passphrase) ----------------------- */
 function readKeyFromUrl(){
-  const m = (location.hash + "&" + location.search).match(/[#?&]k=([^&]+)/);
-  if(!m) return;
-  cfg.pass = decodeURIComponent(m[1].replace(/\+/g," "));
+  const src = location.hash + "&" + location.search;
+  const km = src.match(/[#?&]k=([^&]+)/);
+  const tm = src.match(/[#?&]t=([^&]+)/);
+  if(!km && !tm) return;
+  if(km) cfg.pass  = decodeURIComponent(km[1].replace(/\+/g," "));
+  if(tm) cfg.token = decodeURIComponent(tm[1].replace(/\+/g," "));   // editing link carries the token too
   if(!cfg.repo) cfg.repo = "Banbouk1234/myshishasy-instagram-poster";
   saveCfg();
   try{ history.replaceState(null, "", location.pathname); }catch(e){}
@@ -816,8 +836,9 @@ function readKeyFromUrl(){
 function copyDeviceLink(){
   closeSettingsInputs();
   if(!cfg.pass){ toast("Set your passphrase first"); return; }
-  const link = location.origin + location.pathname + "#k=" + encodeURIComponent(cfg.pass);
-  const done = ()=>toast("Link copied — open it on your other device to see everything");
+  let link = location.origin + location.pathname + "#k=" + encodeURIComponent(cfg.pass);
+  if(cfg.token) link += "&t=" + encodeURIComponent(cfg.token);   // include edit access so the other device can add/save
+  const done = ()=>toast("Link copied — open it on the other device to view and edit");
   if(navigator.clipboard && navigator.clipboard.writeText)
     navigator.clipboard.writeText(link).then(done, ()=>prompt("Copy this link:", link));
   else prompt("Copy this link:", link);
