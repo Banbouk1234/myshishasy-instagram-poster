@@ -96,7 +96,21 @@ Then on the **Variables** tab (same page) → **New repository variable**:
 > "Renewals", and copy the 16-character code. That's your `GMAIL_APP_PASSWORD`.
 > (Your normal Gmail password won't work — Google requires an app password.)
 
-### d. Test it
+### d. (Optional) Add WhatsApp reminders too
+Every reminder can also arrive on **WhatsApp**, using the free **CallMeBot** service —
+no Twilio or business account needed.
+
+For **each person** who wants WhatsApp:
+1. From that person's phone, send this exact message on WhatsApp to **+34 644 84 71 89**:
+   `I allow callmebot to send me messages`
+2. CallMeBot replies with a personal **API key** (a number).
+3. In the app → **⚙️ Settings**, fill that person's **WhatsApp number** (e.g. `+9715…`)
+   and **WhatsApp key**, then **⬆ Save to cloud**.
+
+That's it — the daily robot will now send email **and** WhatsApp. (Nothing extra to add in
+GitHub secrets; the WhatsApp key travels inside your encrypted vault.)
+
+### e. Test it
 GitHub repo → **Actions** → **Renewal Reminders** → **Run workflow**.
 Tick **dry run** first to see it list who *would* get emailed (check the logs).
 Then run it again **without** dry run to send real emails. After that it runs by
@@ -117,7 +131,7 @@ Every reminder email has two buttons:
 
 ## Ideas we can add next (tell me which you want)
 
-- 📱 **WhatsApp reminders** in addition to email (very Dubai-friendly).
+- ✅ **WhatsApp reminders** in addition to email — **done** (see step 3d).
 - 🔐 **Google login + public sign-up** — the "real website" version so anyone can
   register (this is *Phase 2*; the current version is built so we can add it cleanly).
 - 💰 **Cost tracking** — estimated renewal cost per item, and a yearly total to budget.

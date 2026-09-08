@@ -2,8 +2,8 @@
   "_comment": "This is ONLY an example of the data shape. The real data lives in vault.enc (encrypted). Do not put real dates here in a public repo.",
   "version": 1,
   "people": [
-    { "id": "mohanad", "name": "Mohanad", "email": "mohanad@banbouk.com" },
-    { "id": "sara",    "name": "Sara 🍒", "email": "" }
+    { "id": "mohanad", "name": "Mohanad", "email": "mohanad@banbouk.com", "phone": "+9715XXXXXXXX", "waKey": "optional CallMeBot key" },
+    { "id": "sara",    "name": "Sara 🍒", "email": "", "phone": "", "waKey": "" }
   ],
   "items": [
     {

@@ -18,7 +18,7 @@ Secrets / env used:
   DRY_RUN            - (optional) "1" = print emails instead of sending
 """
 
-import os, sys, json, base64, smtplib, ssl
+import os, sys, json, base64, smtplib, ssl, urllib.request, urllib.parse
 from pathlib import Path
 from datetime import datetime, date, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
@@ -162,6 +162,33 @@ def html_body(person, item, days):
 </body></html>"""
 
 
+def whatsapp_text(person, item, days):
+    if days is None:      when = "soon"
+    elif days > 1:        when = f"in {days} days"
+    elif days == 1:       when = "TOMORROW"
+    elif days == 0:       when = "TODAY"
+    else:                 when = f"{abs(days)} day(s) AGO"
+    lines = [f"🔔 Renewal reminder for {person.get('name','you')}",
+             f"*{item['title']}* expires {when} ({fmt(item['expiry'])})."]
+    if item.get("notes"):
+        lines.append(f"📝 {item['notes']}")
+    if APP_URL:
+        lines.append(f"Did you renew? {APP_URL}/#renew={item['id']}")
+    return "\n".join(lines)
+
+
+def send_whatsapp(phone, key, text):
+    """Send a WhatsApp message via CallMeBot (free personal API)."""
+    if DRY_RUN:
+        log(f"   (dry-run) would WhatsApp {phone}")
+        return True
+    url = "https://api.callmebot.com/whatsapp.php?" + urllib.parse.urlencode(
+        {"phone": phone, "text": text, "apikey": key})
+    with urllib.request.urlopen(url, timeout=30) as r:
+        r.read()
+    return True
+
+
 def send_email(to_addr, subject, html):
     if DRY_RUN or not (GMAIL_USER and GMAIL_PASS):
         log(f"   (dry-run) would email {to_addr}: {subject}")
@@ -218,22 +245,37 @@ def main():
 
         owner = people.get(item.get("ownerId"), {})
         to_addr = (owner.get("email") or "").strip()
+        phone   = (owner.get("phone") or "").strip()
+        wa_key  = (owner.get("waKey") or "").strip()
         subject = subject_for(item, days)
 
-        if not to_addr:
-            log(f" - SKIP '{item['title']}' — owner '{owner.get('name','?')}' has no email set")
+        if not to_addr and not (phone and wa_key):
+            log(f" - SKIP '{item['title']}' — owner '{owner.get('name','?')}' has no email or WhatsApp set")
             continue
 
-        try:
-            send_email(to_addr, subject, html_body(owner, item, days))
+        delivered = []
+        if to_addr:
+            try:
+                send_email(to_addr, subject, html_body(owner, item, days))
+                delivered.append(f"email:{to_addr}")
+            except Exception as e:
+                log(f"   email failed for '{item['title']}' -> {to_addr}: {e}")
+        if phone and wa_key:
+            try:
+                send_whatsapp(phone, wa_key, whatsapp_text(owner, item, days))
+                delivered.append(f"whatsapp:{phone}")
+            except Exception as e:
+                log(f"   whatsapp failed for '{item['title']}' -> {phone}: {e}")
+
+        if delivered:
             state["sent"][key] = datetime.now(DUBAI_TZ).isoformat()
             sent_now += 1
-            log(f" - SENT '{item['title']}' -> {to_addr} ({subject})")
-        except Exception as e:
-            log(f" - FAILED '{item['title']}' -> {to_addr}: {e}")
+            log(f" - SENT '{item['title']}' via {', '.join(delivered)} ({subject})")
+        else:
+            log(f" - FAILED '{item['title']}' — no channel delivered")
 
     save_state(state)
-    log(f"Done. {sent_now} email(s) sent.")
+    log(f"Done. {sent_now} reminder(s) sent.")
     return 0
 
 

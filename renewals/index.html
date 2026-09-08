@@ -563,15 +563,26 @@ function markRenewed(id){
 function renderPeople(){
   const box=$("#peopleEditor"); box.innerHTML="";
   vault.people.forEach((p,idx)=>{
-    const d=document.createElement("div"); d.style.marginBottom="10px";
+    const d=document.createElement("div"); d.style.margin="0 0 14px";
     d.innerHTML=`<div class="row2">
         <input value="${escapeHtml(p.name)}" data-pn="${idx}" placeholder="Name"/>
         <input value="${escapeHtml(p.email||"")}" data-pe="${idx}" placeholder="email for reminders"/>
+      </div>
+      <div class="row2" style="margin-top:8px">
+        <input value="${escapeHtml(p.phone||"")}" data-pp="${idx}" placeholder="WhatsApp e.g. +9715…"/>
+        <input value="${escapeHtml(p.waKey||"")}" data-pw="${idx}" placeholder="WhatsApp key (optional)"/>
       </div>`;
     box.appendChild(d);
   });
+  const help=document.createElement("p"); help.className="hint";
+  help.innerHTML='📲 <b>WhatsApp (optional):</b> to get the key, each person sends '+
+    '<b>"I allow callmebot to send me messages"</b> on WhatsApp to '+
+    '<b>+34 644 84 71 89</b>, and CallMeBot replies with a key. Put the number + key above.';
+  box.appendChild(help);
   box.querySelectorAll("[data-pn]").forEach(el=>el.oninput=()=>{ vault.people[+el.dataset.pn].name=el.value; });
   box.querySelectorAll("[data-pe]").forEach(el=>el.oninput=()=>{ vault.people[+el.dataset.pe].email=el.value.trim(); });
+  box.querySelectorAll("[data-pp]").forEach(el=>el.oninput=()=>{ vault.people[+el.dataset.pp].phone=el.value.trim(); });
+  box.querySelectorAll("[data-pw]").forEach(el=>el.oninput=()=>{ vault.people[+el.dataset.pw].waKey=el.value.trim(); });
 }
 function openSettings(){
   $("#sRepo").value=cfg.repo||""; $("#sToken").value=cfg.token||""; $("#sPass").value=cfg.pass||"";
