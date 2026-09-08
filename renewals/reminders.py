@@ -117,6 +117,48 @@ def subject_for(item, days):
     return f"❗ {name} EXPIRED {abs(days)} day(s) ago — did you renew?"
 
 
+# ---- "how to renew" guidance (Dubai) ------------------------------------
+# how = where/steps, time = roughly how long it takes. Figures are typical
+# guidance, not official quotes.
+RENEW_GUIDE = {
+    "mulkiya":  ("Renew on the Dubai Drive / RTA app or at any RTA-approved testing centre (Tasjeel, Shamil, Tamam). Make sure your insurance is valid, the car passes inspection, and any fines / Salik are cleared.",
+                 "about 15–30 minutes (same day at a centre)"),
+    "carins":   ("Renew online with your insurer or a comparison site — the policy is emailed to you straight away.",
+                 "about 10–15 minutes online"),
+    "license":  ("Renew on the Dubai Drive / RTA app or at an RTA centre. You just need a quick eye test (any optician or typing centre).",
+                 "about 15–20 minutes"),
+    "tradelic": ("Renew through Dubai Economy (Dubai BusinessNow app / DET website) or your free-zone portal. Have a valid Ejari / tenancy ready and clear any dues.",
+                 "about 10–20 minutes online if your Ejari is ready"),
+    "estcard":  ("Renew at GDRFA / Amer (or the GDRFA Dubai app) — usually done together with the trade licence.",
+                 "usually 1–2 working days"),
+    "ejari":    ("Renew on the Dubai REST app or at a typing centre with your tenancy contract.",
+                 "about 15 minutes"),
+    "vat":      ("File your return on the FTA EmaraTax portal and pay any VAT due.",
+                 "about 30–60 minutes depending on your records"),
+    "emirates": ("Renew on the ICP app / website or at a typing centre (usually with your visa).",
+                 "about 10 minutes to apply; the card arrives in a few days"),
+    "visa":     ("Renew through GDRFA / Amer or ICP — it includes a medical fitness test and Emirates ID.",
+                 "a few days end-to-end — best to start now"),
+    "passport": ("Renew through your country's embassy / consulate or their online portal — book early.",
+                 "days to a few weeks — start early"),
+    "health":   ("Renew with your insurer or broker online — it's mandatory in Dubai and needed for your visa.",
+                 "about 10–15 minutes online"),
+    "homeejari":("Renew your tenancy and Ejari on the Dubai REST app; keep DEWA active.",
+                 "about 15 minutes"),
+    "salik":    ("Just top up your balance in the Salik app or website.",
+                 "about 2 minutes"),
+}
+GENERIC_GUIDE = {
+    "vehicle":  ("Renew via the RTA (Dubai Drive app or an RTA centre).", "usually under 30 minutes"),
+    "company":  ("Renew via Dubai Economy or your free-zone portal.",     "usually under 30 minutes"),
+    "personal": ("Renew via the relevant authority (ICP / GDRFA or your provider).", "usually quick"),
+    "home":     ("Renew on the Dubai REST app or with your landlord.",    "about 15 minutes"),
+    "other":    ("Renew with the relevant provider or authority.",        "usually quick"),
+}
+def get_guide(item):
+    return RENEW_GUIDE.get(item.get("type")) or GENERIC_GUIDE.get(item.get("category"))
+
+
 def html_body(person, item, days):
     when = ("in <b>%d days</b>" % days) if days and days > 1 else (
         "<b>tomorrow</b>" if days == 1 else (
@@ -127,6 +169,18 @@ def html_body(person, item, days):
     snooze_link = f"{APP_URL}/#snooze={item['id']}"  if APP_URL else "#"
     notes = f"""<tr><td style="padding:6px 0;color:#475569;font-size:13px">
                 📝 {item.get('notes','')}</td></tr>""" if item.get("notes") else ""
+    guide = ""
+    g = get_guide(item)
+    if g:
+        how, tm = g
+        overdue = days is not None and days < 0
+        lead = ("It's overdue — renew today to stop fines and daily penalties, and it's quick:"
+                if overdue else
+                "It's quick and easy — best to do it now so you don't risk a fine:")
+        guide = f"""
+      <tr><td style="padding:16px 0 2px;font-size:14px;color:#0f172a"><b>✅ {lead}</b></td></tr>
+      <tr><td style="color:#334155;font-size:14px;padding:3px 0">🛠️ <b>How:</b> {how}</td></tr>
+      <tr><td style="color:#334155;font-size:14px;padding:3px 0">⏱️ <b>Takes:</b> {tm}.</td></tr>"""
     buttons = ""
     if APP_URL:
         buttons = f"""
@@ -153,6 +207,7 @@ def html_body(person, item, days):
       <tr><td style="color:#475569;font-size:14px;padding:2px 0">
           📅 Expiry date: <b>{fmt(item['expiry'])}</b></td></tr>
       {notes}
+      {guide}
       {buttons}
       <tr><td style="padding-top:20px;color:#94a3b8;font-size:12px;border-top:1px solid #eef1f4">
           You're getting this because it's on your Renewals list.
@@ -173,6 +228,14 @@ def whatsapp_text(person, item, days):
              f"*{item['title']}* expires {when} ({fmt(item['expiry'])})."]
     if item.get("notes"):
         lines.append(f"📝 {item['notes']}")
+    g = get_guide(item)
+    if g:
+        how, tm = g
+        lines.append(("⚠️ Overdue — renew today to avoid fines, it's quick."
+                      if (days is not None and days < 0)
+                      else "✅ Quick and easy — best to do it now to avoid a fine."))
+        lines.append(f"🛠️ {how}")
+        lines.append(f"⏱️ Takes {tm}.")
     if APP_URL:
         lines.append(f"Did you renew? {APP_URL}/#renew={item['id']}")
     return "\n".join(lines)
