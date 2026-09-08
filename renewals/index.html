@@ -245,7 +245,7 @@
 
     <label class="f">GitHub repo (owner/name)</label>
     <input id="sRepo" placeholder="Banbouk1234/myshishasy-instagram-poster" />
-    <label class="f">Access token (fine-grained PAT, Contents: read &amp; write)</label>
+    <label class="f">Access token <span class="tag">(only needed to add/change items on this device — to just view, the passphrase alone is enough)</span></label>
     <input id="sToken" type="password" placeholder="github_pat_..." />
     <label class="f">Encryption passphrase <span class="tag">(also add this as the VAULT_PASSPHRASE secret)</span></label>
     <input id="sPass" type="password" placeholder="a secret phrase you & Sara share" />
@@ -256,6 +256,8 @@
       <button class="btn" id="btnPull">⬇ Load from cloud</button>
       <button class="btn primary" id="btnPush">⬆ Save to cloud</button>
     </div>
+    <button class="btn" id="btnCopyLink" style="margin-top:10px;width:100%">🔗 Copy my link for phone / Sara</button>
+    <p class="hint">Open that link on any device to see everything instantly — no setup needed. (Anyone with this exact link can see your list, so only share it with people you trust.)</p>
 
     <div class="divider"></div>
     <div class="btnrow">
@@ -387,7 +389,7 @@ async function decryptVault(b64str, pass){
 }
 
 /* ---- GitHub sync -------------------------------------------------- */
-function ghHeaders(){ return {Authorization:"Bearer "+cfg.token, Accept:"application/vnd.github+json"}; }
+function ghHeaders(){ const h={Accept:"application/vnd.github+json"}; if(cfg.token) h.Authorization="Bearer "+cfg.token; return h; }
 async function ghGet(){
   const r=await fetch(`https://api.github.com/repos/${cfg.repo}/contents/${VAULT_PATH}`,{headers:ghHeaders()});
   if(r.status===404) return {sha:null, content:null};
@@ -402,10 +404,11 @@ async function ghPut(contentStr, sha){
   if(!r.ok) throw new Error("GitHub write failed ("+r.status+")");
   return r.json();
 }
-function syncReady(){ return cfg.repo && cfg.token && cfg.pass; }
+function syncReady(){ return cfg.repo && cfg.token && cfg.pass; }   // needed to SAVE (write)
+function pullReady(){ return cfg.repo && cfg.pass; }               // enough to LOAD a public repo (read)
 
 async function pushCloud(silent){
-  if(!syncReady()){ if(!silent) toast("Fill repo, token & passphrase first"); return; }
+  if(!syncReady()){ if(!silent) toast("Add your access token in Settings to save changes"); return; }
   try{
     const cur=await ghGet();
     const encStr=await encryptVault(vault, cfg.pass);
@@ -415,7 +418,7 @@ async function pushCloud(silent){
   }catch(e){ if(!silent) toast("Sync error: "+e.message); }
 }
 async function pullCloud(silent){
-  if(!syncReady()){ if(!silent) toast("Fill repo, token & passphrase first"); return; }
+  if(!pullReady()){ if(!silent) toast("Enter the repo and passphrase first"); return; }
   try{
     const cur=await ghGet();
     if(!cur.content){ if(!silent) toast("Nothing in cloud yet — use Save"); return; }
@@ -801,9 +804,29 @@ async function handleHash(){
   }
 }
 
+/* ---- Personal sign-in link (#k=passphrase) ----------------------- */
+function readKeyFromUrl(){
+  const m = (location.hash + "&" + location.search).match(/[#?&]k=([^&]+)/);
+  if(!m) return;
+  cfg.pass = decodeURIComponent(m[1].replace(/\+/g," "));
+  if(!cfg.repo) cfg.repo = "Banbouk1234/myshishasy-instagram-poster";
+  saveCfg();
+  try{ history.replaceState(null, "", location.pathname); }catch(e){}
+}
+function copyDeviceLink(){
+  closeSettingsInputs();
+  if(!cfg.pass){ toast("Set your passphrase first"); return; }
+  const link = location.origin + location.pathname + "#k=" + encodeURIComponent(cfg.pass);
+  const done = ()=>toast("Link copied — open it on your other device to see everything");
+  if(navigator.clipboard && navigator.clipboard.writeText)
+    navigator.clipboard.writeText(link).then(done, ()=>prompt("Copy this link:", link));
+  else prompt("Copy this link:", link);
+}
+
 /* ---- Wire up ------------------------------------------------------ */
 function init(){
   load();
+  readKeyFromUrl();
   $("#btnAdd").onclick=()=>openEdit(null);
   $("#btnCancel").onclick=closeEdit;
   $("#btnSave").onclick=saveEdit;
@@ -815,11 +838,12 @@ function init(){
   $("#btnExport").onclick=exportBackup;
   $("#btnPush").onclick=()=>{ closeSettingsInputs(); pushCloud(false); };
   $("#btnPull").onclick=()=>{ closeSettingsInputs(); pullCloud(false); };
+  $("#btnCopyLink").onclick=copyDeviceLink;
   [$("#editScrim"),$("#setScrim")].forEach(s=>s.onclick=e=>{ if(e.target===s) s.classList.remove("open"); });
   renderAll();
   handleHash();
   window.addEventListener("hashchange", handleHash);
-  if(syncReady()) pullCloud(true);
+  if(pullReady()) pullCloud(true);
   else if(!vault.items.length && !location.hash && !localStorage.getItem("renewals.wizardDone")) openWizard();
 }
 function closeSettingsInputs(){
