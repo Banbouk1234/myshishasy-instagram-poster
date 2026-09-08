@@ -107,6 +107,34 @@
   .switchdays{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
   .day{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:8px 12px;font-size:13px;cursor:pointer}
   .day.on{background:var(--brand);border-color:var(--brand);color:#fff}
+  /* wizard */
+  .wizdots{display:flex;gap:6px;justify-content:center;margin:2px 0 16px}
+  .wizdots i{width:7px;height:7px;border-radius:99px;background:var(--line);transition:.2s}
+  .wizdots i.on{background:var(--brand);width:20px}
+  .wizq{text-align:center;margin:6px 0 18px}
+  .wizq .e{font-size:44px;display:block;margin-bottom:8px}
+  .wizq h2{font-size:20px;margin:0 0 4px;line-height:1.25;text-wrap:balance}
+  .wizq p{color:var(--muted);font-size:13.5px;margin:0}
+  .yesno{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0 4px}
+  .yesno button{padding:16px;border-radius:14px;border:2px solid var(--line);background:var(--card);
+    color:var(--ink);font-size:15px;font-weight:600;cursor:pointer}
+  .yesno button.sel{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-ink)}
+  .stepper{display:flex;align-items:center;justify-content:center;gap:16px;margin:10px 0}
+  .stepper button{width:52px;height:52px;border-radius:14px;border:1px solid var(--line);
+    background:var(--card);color:var(--ink);font-size:26px;cursor:pointer}
+  .stepper .n{font-size:34px;font-weight:800;min-width:52px;text-align:center;font-variant-numeric:tabular-nums}
+  .datefields{margin-top:6px}
+  .datefields .df{display:flex;align-items:center;gap:10px;margin:8px 0}
+  .datefields .df .lab{flex:1;font-size:14px}
+  .datefields .df .lab small{display:block;color:var(--muted);font-size:11.5px}
+  .datefields .df input{width:158px;flex:0 0 auto}
+  .carbox{border:1px solid var(--line);border-radius:14px;padding:12px;margin:10px 0;background:var(--bg)}
+  .carbox h4{margin:0 0 8px;font-size:14px}
+  .wizhint{font-size:12px;color:var(--muted);text-align:center;margin:12px 0 2px}
+  .wizpeople{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+  .wizpeople button{padding:14px;border-radius:14px;border:2px solid var(--line);background:var(--card);
+    color:var(--ink);font-size:16px;font-weight:600;cursor:pointer;text-align:left}
+  .wizpeople button.sel{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-ink)}
   .banner{background:var(--amber-soft);color:var(--amber);border-radius:12px;padding:10px 12px;font-size:12.5px;margin-top:12px;display:none}
   .banner.show{display:block}
   .synced{font-size:11px;color:var(--muted);text-align:center;margin-top:16px}
@@ -127,6 +155,7 @@
         <p id="subtitle">Dubai renewal reminders</p>
       </div>
       <div class="spacer"></div>
+      <button class="iconbtn" id="btnWizard" title="Guided setup">✨</button>
       <button class="iconbtn" id="btnSettings" title="Settings">⚙️</button>
     </div>
     <div class="who" id="whoRow"></div>
@@ -237,6 +266,16 @@
   </div>
 </div>
 
+<!-- Guided setup wizard -->
+<div class="scrim" id="wizScrim">
+  <div class="sheet">
+    <div class="grip"></div>
+    <div class="wizdots" id="wizDots"></div>
+    <div id="wizBody"></div>
+    <div class="btnrow" id="wizFooter"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -284,7 +323,9 @@ const $ = s => document.querySelector(s);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const todayISO = () => new Date().toISOString().slice(0,10);
 function daysUntil(iso){
+  if(!iso) return null;
   const d = new Date(iso+"T00:00:00");
+  if(isNaN(d)) return null;
   const t = new Date(todayISO()+"T00:00:00");
   return Math.round((d - t)/86400000);
 }
@@ -390,6 +431,7 @@ function personById(id){ return vault.people.find(p=>p.id===id); }
 function ownerName(id){ const p=personById(id); return p?p.name:"—"; }
 
 function urgencyBadge(d, recur){
+  if(d===null) return `<span class="badge b-amber">Add date</span>`;
   if(d<0)  return `<span class="badge b-red">Overdue ${-d}d</span>`;
   if(d===0)return `<span class="badge b-red">Today</span>`;
   if(d<=10)return `<span class="badge b-amber">${d} day${d>1?"s":""} left</span>`;
@@ -414,7 +456,7 @@ function visibleItems(){
 function renderSummary(){
   const items=visibleItems();
   let soon=0, over=0, ok=0;
-  items.forEach(i=>{ const d=daysUntil(i.expiry); if(d<0)over++; else if(d<=10)soon++; else ok++; });
+  items.forEach(i=>{ const d=daysUntil(i.expiry); if(d===null)return; if(d<0)over++; else if(d<=10)soon++; else ok++; });
   $("#summary").innerHTML=`
     <div class="stat red"><b>${over}</b><span>Overdue</span></div>
     <div class="stat amber"><b>${soon}</b><span>Due ≤10 days</span></div>
@@ -425,9 +467,12 @@ function renderList(){
   const list=$("#list"); const items=visibleItems();
   if(!items.length){
     list.innerHTML=`<div class="empty">
-      <div class="big">🎉</div>
-      <p>No renewals yet. Add your first one — or quick-add a common Dubai item:</p>
+      <div class="big">👋</div>
+      <p>Let's set up your renewals — I'll ask a few quick questions to see what you have.</p>
+      <button class="btn primary" id="startWiz" style="max-width:280px;margin:14px auto 0">✨ Start guided setup</button>
+      <p style="margin-top:22px;font-size:13px">…or quick-add a common Dubai item:</p>
       <div class="quickadd" id="qaRow"></div></div>`;
+    $("#startWiz").onclick=()=>openWizard();
     const qa=$("#qaRow");
     ["mulkiya","carins","tradelic","estcard","emirates","visa"].forEach(k=>{
       const p=PRESETS.find(x=>x.key===k); const b=document.createElement("button");
@@ -437,6 +482,7 @@ function renderList(){
     return;
   }
   const groups=[
+    {t:"📅 Needs a date", f:d=>d===null},
     {t:"⚠️ Overdue", f:d=>d<0},
     {t:"🔴 This week", f:d=>d>=0&&d<=10},
     {t:"🔵 This month", f:d=>d>10&&d<=30},
@@ -462,7 +508,7 @@ function card(i){
       <h3>${escapeHtml(i.title)}</h3>
       <div class="cmeta">
         <span class="owner-dot">👤 ${escapeHtml(ownerName(i.ownerId))}</span>
-        <span>📅 ${fmtDate(i.expiry)}</span>
+        <span>${i.expiry?"📅 "+fmtDate(i.expiry):"📅 No date yet"}</span>
         ${urgencyBadge(d,i.recur)}
       </div>
       ${i.notes?`<div class="note">📝 ${escapeHtml(i.notes)}</div>`:""}
@@ -546,6 +592,7 @@ function saveEdit(){
 }
 function markRenewed(id){
   const i=vault.items.find(x=>x.id===id); if(!i) return;
+  if(!i.expiry || isNaN(new Date(i.expiry+"T00:00:00"))){ toast("Add the expiry date first"); openEdit(id); return; }
   const recur=Number(i.recur||0);
   i.history=i.history||[]; i.history.push({renewedOn:todayISO(), wasExpiry:i.expiry});
   if(recur>0){
@@ -602,6 +649,145 @@ function exportBackup(){
   a.href=url; a.download="renewals-backup.json"; a.click(); URL.revokeObjectURL(url);
 }
 
+/* ---- Guided setup wizard ----------------------------------------- */
+const WIZARD = [
+  {id:"resident", icon:"🪪", q:"Do you live in the UAE on a residence visa?",
+   sub:"We'll track your visa, Emirates ID, health insurance and passport.",
+   keys:["visa","emirates","health","passport"]},
+  {id:"license",  icon:"🚦", q:"Do you have a UAE driving licence?",
+   sub:"", keys:["license"]},
+  {id:"cars",     icon:"🚗", q:"How many cars do you have?", count:true,
+   sub:"For each car we'll track the Mulkiya (registration) and insurance.",
+   keys:["mulkiya","carins"]},
+  {id:"home",     icon:"🏠", q:"Do you rent your home in the UAE?",
+   sub:"We'll remind you before the tenancy / Ejari runs out.", keys:["homeejari"]},
+  {id:"company",  icon:"🏢", q:"Do you own a company or business here?",
+   sub:"Trade licence, establishment card, office Ejari and VAT.",
+   keys:["tradelic","estcard","ejari","vat"]},
+];
+function getPreset(key){ return PRESETS.find(p=>p.key===key); }
+let wiz = null;
+
+function openWizard(personId){
+  wiz = { step:0, personId: personId || (filterOwner!=="all"?filterOwner:vault.people[0]?.id), answers:{}, added:0 };
+  $("#wizScrim").classList.add("open");
+  renderWizard();
+}
+function closeWizard(){
+  $("#wizScrim").classList.remove("open");
+  try{ localStorage.setItem("renewals.wizardDone","1"); }catch(e){}
+}
+function wizAns(sec){
+  if(!wiz.answers[sec.id]) wiz.answers[sec.id]={has:null, count:0, dates:{}, cars:[]};
+  return wiz.answers[sec.id];
+}
+function renderWizard(){
+  const total = WIZARD.length + 2;               // intro + sections + done
+  const dots = $("#wizDots"); dots.innerHTML="";
+  for(let k=0;k<total;k++){ const i=document.createElement("i"); if(k===wiz.step)i.className="on"; dots.appendChild(i); }
+  const body=$("#wizBody"), foot=$("#wizFooter");
+  body.innerHTML=""; foot.innerHTML="";
+
+  if(wiz.step===0){                               // intro: who is this for
+    const p=personById(wiz.personId)||vault.people[0];
+    body.innerHTML=`<div class="wizq"><span class="e">✨</span>
+      <h2>Let's set up your renewals</h2>
+      <p>A few quick questions to see what you have. Skip anything that doesn't apply — you can change everything later.</p></div>
+      <label class="f">Who are we setting up?</label><div class="wizpeople" id="wizPeople"></div>`;
+    const box=$("#wizPeople");
+    vault.people.forEach(pr=>{ const b=document.createElement("button");
+      b.className=(pr.id===wiz.personId?"sel":""); b.textContent=pr.name;
+      b.onclick=()=>{ wiz.personId=pr.id; renderWizard(); }; box.appendChild(b); });
+    foot.appendChild(mkBtn("Cancel","",closeWizard));
+    foot.appendChild(mkBtn("Start →","primary",()=>{ wiz.step=1; renderWizard(); }));
+    return;
+  }
+
+  if(wiz.step>=1 && wiz.step<=WIZARD.length){     // a section
+    const sec=WIZARD[wiz.step-1], a=wizAns(sec);
+    let h=`<div class="wizq"><span class="e">${sec.icon}</span><h2>${sec.q}</h2>${sec.sub?`<p>${sec.sub}</p>`:""}</div>`;
+    if(sec.count){
+      h+=`<div class="stepper"><button id="wMinus">−</button><span class="n" id="wCount">${a.count||0}</span><button id="wPlus">+</button></div>
+          <div id="carForms"></div>`;
+    }else{
+      h+=`<div class="yesno">
+            <button id="wYes" class="${a.has===true?"sel":""}">Yes</button>
+            <button id="wNo" class="${a.has===false?"sel":""}">No / skip</button>
+          </div><div id="dateFields"></div>`;
+    }
+    body.innerHTML=h;
+    if(sec.count){
+      const draw=()=>{
+        $("#wCount").textContent=a.count;
+        const cf=$("#carForms"); cf.innerHTML="";
+        for(let n=0;n<a.count;n++){
+          a.cars[n]=a.cars[n]||{nick:"",dates:{}};
+          const c=a.cars[n];
+          const div=document.createElement("div"); div.className="carbox";
+          div.innerHTML=`<h4>🚗 Car ${n+1}</h4>
+            <input placeholder="Nickname (e.g. Range Rover)" value="${escapeHtml(c.nick||"")}" data-nick="${n}"/>
+            <div class="datefields">
+              ${sec.keys.map(key=>{const p=getPreset(key);return `<div class="df"><div class="lab">${p.emoji} ${p.label}</div>
+                 <input type="date" data-cd="${n}:${key}" value="${c.dates[key]||""}"/></div>`;}).join("")}
+            </div>`;
+          cf.appendChild(div);
+        }
+        cf.querySelectorAll("[data-nick]").forEach(el=>el.oninput=()=>{ a.cars[+el.dataset.nick].nick=el.value; });
+        cf.querySelectorAll("[data-cd]").forEach(el=>el.oninput=()=>{ const[n,key]=el.dataset.cd.split(":"); a.cars[+n].dates[key]=el.value; });
+      };
+      $("#wMinus").onclick=()=>{ a.count=Math.max(0,(a.count||0)-1); draw(); };
+      $("#wPlus").onclick =()=>{ a.count=Math.min(20,(a.count||0)+1); draw(); };
+      draw();
+    }else{
+      const drawDates=()=>{
+        const df=$("#dateFields"); df.innerHTML="";
+        if(a.has===true){
+          df.className="datefields";
+          df.innerHTML=sec.keys.map(key=>{const p=getPreset(key);
+            return `<div class="df"><div class="lab">${p.emoji} ${p.name||p.label}<small>${p.note||""}</small></div>
+              <input type="date" data-d="${key}" value="${a.dates[key]||""}"/></div>`;}).join("")
+            + `<p class="wizhint">Don't know a date? Leave it empty and add it later.</p>`;
+          df.querySelectorAll("[data-d]").forEach(el=>el.oninput=()=>{ a.dates[el.dataset.d]=el.value; });
+        }
+      };
+      $("#wYes").onclick=()=>{ a.has=true;  renderWizard(); };
+      $("#wNo").onclick =()=>{ a.has=false; renderWizard(); };
+      drawDates();
+    }
+    foot.appendChild(mkBtn("← Back","",()=>{ wiz.step--; renderWizard(); }));
+    const last = wiz.step===WIZARD.length;
+    foot.appendChild(mkBtn(last?"Finish":"Next →","primary",()=>{
+      if(last){ finishWizard(); wiz.step=WIZARD.length+1; renderWizard(); }
+      else { wiz.step++; renderWizard(); }
+    }));
+    return;
+  }
+
+  // done
+  const name=(personById(wiz.personId)||{}).name||"you";
+  body.innerHTML=`<div class="wizq"><span class="e">✅</span>
+     <h2>Added ${wiz.added} renewal${wiz.added===1?"":"s"} for ${escapeHtml(name)}</h2>
+     <p>You'll be reminded 10 days before, 1 day before, and on the day. Any item with no date shows "Add date" — just tap it to fill in.</p></div>`;
+  foot.appendChild(mkBtn("Set up someone else","",()=>{ openWizard(); }));
+  foot.appendChild(mkBtn("Done","primary",closeWizard));
+}
+function mkBtn(label,cls,fn){ const b=document.createElement("button"); b.className="btn"+(cls?" "+cls:""); b.textContent=label; b.onclick=fn; return b; }
+
+function finishWizard(){
+  const pid=wiz.personId; let added=0;
+  const pushItem=(type,title,expiry,p)=>{ vault.items.push({id:uid(),ownerId:pid,type,title,
+    category:p.cat,expiry:expiry||"",recur:p.recur,reminderDays:[10,1,0],notes:p.note||"",
+    status:"active",createdAt:todayISO(),history:[]}); added++; };
+  const upsert=(type,title,expiry,p)=>{ const ex=vault.items.find(i=>i.ownerId===pid&&i.type===type&&i.status!=="archived");
+    if(ex){ if(expiry) ex.expiry=expiry; added++; } else pushItem(type,title,expiry,p); };
+  WIZARD.forEach(sec=>{ const a=wiz.answers[sec.id]; if(!a) return;
+    if(sec.count){ (a.cars||[]).slice(0,a.count).forEach(car=>{ const nick=(car.nick||"").trim();
+        sec.keys.forEach(key=>{ const p=getPreset(key); pushItem(key,p.label+(nick?` – ${nick}`:""),car.dates[key],p); }); });
+    }else if(a.has===true){ sec.keys.forEach(key=>{ const p=getPreset(key); upsert(key,p.name||p.label,a.dates[key],p); }); }
+  });
+  wiz.added=added; save(); renderAll(); pushCloud(true);
+}
+
 /* ---- Deep links from reminder emails (#renew=<id>) ---------------- */
 async function handleHash(){
   const h=location.hash;
@@ -622,6 +808,7 @@ function init(){
   $("#btnCancel").onclick=closeEdit;
   $("#btnSave").onclick=saveEdit;
   $("#btnDelete").onclick=()=>{ if(editingId && confirm("Delete this renewal?")){ vault.items=vault.items.filter(x=>x.id!==editingId); closeEdit(); renderAll(); pushCloud(true);} };
+  $("#btnWizard").onclick=()=>openWizard();
   $("#btnSettings").onclick=openSettings;
   $("#btnCloseSet").onclick=closeSettings;
   $("#btnAddPerson").onclick=()=>{ vault.people.push({id:uid(),name:"New person",email:""}); renderPeople(); };
@@ -633,6 +820,7 @@ function init(){
   handleHash();
   window.addEventListener("hashchange", handleHash);
   if(syncReady()) pullCloud(true);
+  else if(!vault.items.length && !location.hash && !localStorage.getItem("renewals.wizardDone")) openWizard();
 }
 function closeSettingsInputs(){
   cfg.repo=$("#sRepo").value.trim(); cfg.token=$("#sToken").value.trim(); cfg.pass=$("#sPass").value; saveCfg();

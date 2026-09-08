@@ -10,6 +10,11 @@ keeps nagging every day if something is overdue — with **"✅ I renewed it"** 
 
 Right now it's set up for **Mohanad** and **Sara 🍒**. You can add more people any time.
 
+The first time you open it, a **guided setup** asks a few questions — *Do you live here on a visa?
+How many cars? Do you own a company? Do you rent your home?* — and builds your renewal list
+from the answers. Skip anything that doesn't apply, and leave a date blank to fill in later
+(it'll show "Add date" until you do). You can re-run it any time from the **✨** button.
+
 ---
 
 ## What's in here
