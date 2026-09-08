@@ -1,0 +1,42 @@
+name: Deploy app to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'renewals/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Pages (enable it if it isn't already)
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Assemble the site
+        run: |
+          mkdir -p _site/renewals
+          cp -r renewals/* _site/renewals/
+          # root just redirects to the app
+          printf '%s' '<!doctype html><meta http-equiv="refresh" content="0; url=./renewals/"><a href="./renewals/">Open Renewals</a>' > _site/index.html
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
