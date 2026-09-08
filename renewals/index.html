@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0f766e" />
+<title>Renewals — Dubai Reminder System</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --line:#e5e8ec;
+    --brand:#0f766e; --brand-ink:#0b5f58; --brand-soft:#e6f4f2;
+    --red:#dc2626; --red-soft:#fee2e2; --amber:#b45309; --amber-soft:#fef3c7;
+    --green:#15803d; --green-soft:#dcfce7; --blue:#1d4ed8; --blue-soft:#dbeafe;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 4px 16px rgba(16,24,40,.06);
+    --radius:16px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0b1120; --card:#111827; --ink:#e7ecf3; --muted:#94a3b8; --line:#1f2a3a;
+      --brand:#2dd4bf; --brand-ink:#5eead4; --brand-soft:#0f2b28;
+      --red:#f87171; --red-soft:#3b1618; --amber:#fbbf24; --amber-soft:#3a2c07;
+      --green:#4ade80; --green-soft:#0f2a19; --blue:#60a5fa; --blue-soft:#0e2547;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 28px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji",sans-serif;
+    -webkit-font-smoothing:antialiased; padding-bottom:96px;
+  }
+  a{color:var(--brand)}
+  .wrap{max-width:720px;margin:0 auto;padding:0 14px}
+  header.top{
+    position:sticky;top:0;z-index:20;background:var(--bg);
+    padding:14px 0 10px; border-bottom:1px solid var(--line);
+  }
+  .brandrow{display:flex;align-items:center;gap:10px}
+  .logo{width:34px;height:34px;border-radius:10px;background:var(--brand);color:#fff;
+        display:grid;place-items:center;font-size:19px;flex:0 0 auto}
+  .title h1{font-size:17px;margin:0;letter-spacing:-.2px}
+  .title p{margin:0;color:var(--muted);font-size:12px}
+  .spacer{flex:1}
+  .iconbtn{border:1px solid var(--line);background:var(--card);color:var(--ink);
+           width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+           font-size:17px;cursor:pointer}
+  .iconbtn:active{transform:scale(.96)}
+  .who{display:flex;gap:8px;margin-top:12px;overflow:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+  .chip{white-space:nowrap;border:1px solid var(--line);background:var(--card);color:var(--muted);
+        padding:8px 14px;border-radius:999px;font-weight:600;font-size:13px;cursor:pointer}
+  .chip.active{background:var(--brand);border-color:var(--brand);color:#fff}
+  .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 6px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;box-shadow:var(--shadow)}
+  .stat b{font-size:22px;display:block;line-height:1.1}
+  .stat span{font-size:11px;color:var(--muted)}
+  .stat.red b{color:var(--red)} .stat.amber b{color:var(--amber)} .stat.green b{color:var(--green)}
+  .section-h{display:flex;align-items:center;gap:8px;margin:18px 2px 8px;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .section-h .ln{flex:1;height:1px;background:var(--line)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+        padding:14px;box-shadow:var(--shadow);margin-bottom:10px;display:flex;gap:12px;align-items:flex-start}
+  .cat{width:42px;height:42px;border-radius:12px;background:var(--brand-soft);display:grid;place-items:center;font-size:21px;flex:0 0 auto}
+  .cbody{flex:1;min-width:0}
+  .cbody h3{margin:0 0 2px;font-size:15px;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cmeta{color:var(--muted);font-size:12.5px;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+  .owner-dot{display:inline-flex;align-items:center;gap:5px}
+  .badge{display:inline-block;font-weight:700;font-size:11.5px;padding:4px 9px;border-radius:999px;white-space:nowrap}
+  .b-red{background:var(--red-soft);color:var(--red)}
+  .b-amber{background:var(--amber-soft);color:var(--amber)}
+  .b-green{background:var(--green-soft);color:var(--green)}
+  .b-blue{background:var(--blue-soft);color:var(--blue)}
+  .cactions{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+  .mini{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:9px;
+        padding:6px 8px;font-size:12px;cursor:pointer;white-space:nowrap}
+  .mini.go{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+  .note{font-size:12.5px;color:var(--muted);margin-top:6px;background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:7px 9px}
+  .empty{text-align:center;padding:34px 18px;color:var(--muted)}
+  .empty .big{font-size:46px}
+  .quickadd{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}
+  .qa{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 13px;font-size:13px;cursor:pointer;color:var(--ink)}
+  .fab{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;z-index:30;
+       background:var(--brand);color:#fff;border:none;border-radius:999px;padding:15px 26px;
+       font-size:15px;font-weight:700;box-shadow:0 8px 24px rgba(15,118,110,.45);cursor:pointer;display:flex;gap:8px;align-items:center}
+  .fab:active{transform:translateX(-50%) scale(.97)}
+  /* modal */
+  .scrim{position:fixed;inset:0;background:rgba(2,6,23,.5);backdrop-filter:blur(2px);z-index:50;display:none;align-items:flex-end;justify-content:center}
+  .scrim.open{display:flex}
+  .sheet{background:var(--card);width:100%;max-width:560px;max-height:92vh;overflow:auto;
+         border-radius:20px 20px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));box-shadow:var(--shadow)}
+  @media(min-width:560px){.sheet{border-radius:20px;margin-bottom:24px}.scrim{align-items:center}}
+  .sheet h2{margin:2px 0 14px;font-size:18px}
+  .grip{width:38px;height:4px;border-radius:99px;background:var(--line);margin:2px auto 12px}
+  label.f{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:12px 0 5px}
+  input,select,textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;
+    background:var(--bg);color:var(--ink);font-size:15px;font-family:inherit}
+  textarea{min-height:64px;resize:vertical}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .preset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:4px}
+  .preset{border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer;font-size:12px}
+  .preset .e{font-size:22px;display:block;margin-bottom:3px}
+  .preset.sel{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-ink);font-weight:600}
+  .btnrow{display:flex;gap:10px;margin-top:18px}
+  .btn{flex:1;padding:13px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:15px;font-weight:600;cursor:pointer}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.danger{background:transparent;border-color:var(--red);color:var(--red);flex:0 0 auto;width:52px}
+  .hint{font-size:12px;color:var(--muted);margin-top:6px}
+  .switchdays{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+  .day{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:8px 12px;font-size:13px;cursor:pointer}
+  .day.on{background:var(--brand);border-color:var(--brand);color:#fff}
+  .banner{background:var(--amber-soft);color:var(--amber);border-radius:12px;padding:10px 12px;font-size:12.5px;margin-top:12px;display:none}
+  .banner.show{display:block}
+  .synced{font-size:11px;color:var(--muted);text-align:center;margin-top:16px}
+  .divider{height:1px;background:var(--line);margin:16px 0}
+  .toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);
+    padding:11px 16px;border-radius:12px;font-size:13.5px;z-index:80;opacity:0;transition:.25s;pointer-events:none;box-shadow:var(--shadow)}
+  .toast.show{opacity:1}
+  .tag{font-size:11px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brandrow">
+      <div class="logo">🔔</div>
+      <div class="title">
+        <h1>Renewals</h1>
+        <p id="subtitle">Dubai renewal reminders</p>
+      </div>
+      <div class="spacer"></div>
+      <button class="iconbtn" id="btnSettings" title="Settings">⚙️</button>
+    </div>
+    <div class="who" id="whoRow"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="summary" id="summary"></div>
+  <div id="list"></div>
+</main>
+
+<button class="fab" id="btnAdd">＋ Add renewal</button>
+
+<!-- Add / Edit sheet -->
+<div class="scrim" id="editScrim">
+  <div class="sheet">
+    <div class="grip"></div>
+    <h2 id="editTitle">Add a renewal</h2>
+
+    <label class="f">Quick pick (Dubai)</label>
+    <div class="preset-grid" id="presetGrid"></div>
+
+    <label class="f">Name</label>
+    <input id="fName" placeholder="e.g. Mulkiya – Range Rover" />
+
+    <div class="row2">
+      <div>
+        <label class="f">Owner</label>
+        <select id="fOwner"></select>
+      </div>
+      <div>
+        <label class="f">Expiry date</label>
+        <input id="fExpiry" type="date" />
+      </div>
+    </div>
+
+    <div class="row2">
+      <div>
+        <label class="f">Category</label>
+        <select id="fCategory">
+          <option value="vehicle">🚗 Vehicle</option>
+          <option value="company">🏢 Company</option>
+          <option value="personal">🪪 Personal</option>
+          <option value="home">🏠 Home</option>
+          <option value="other">📄 Other</option>
+        </select>
+      </div>
+      <div>
+        <label class="f">Renews every</label>
+        <select id="fRecur">
+          <option value="12">Year</option>
+          <option value="6">6 months</option>
+          <option value="3">3 months (e.g. VAT)</option>
+          <option value="24">2 years</option>
+          <option value="0">Doesn't repeat</option>
+        </select>
+      </div>
+    </div>
+
+    <label class="f">Remind me… (days before)</label>
+    <div class="switchdays" id="daysRow"></div>
+
+    <label class="f">Notes / checklist <span class="tag">(what you need to renew)</span></label>
+    <textarea id="fNotes" placeholder="e.g. Valid insurance + pass inspection + clear fines"></textarea>
+
+    <div class="btnrow">
+      <button class="btn danger" id="btnDelete" title="Delete">🗑</button>
+      <button class="btn" id="btnCancel">Cancel</button>
+      <button class="btn primary" id="btnSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings sheet -->
+<div class="scrim" id="setScrim">
+  <div class="sheet">
+    <div class="grip"></div>
+    <h2>Settings</h2>
+
+    <div class="section-h" style="margin-top:0">People <span class="ln"></span></div>
+    <div id="peopleEditor"></div>
+    <button class="mini" id="btnAddPerson" style="margin-top:8px">＋ Add a person</button>
+
+    <div class="divider"></div>
+    <div class="section-h" style="margin-top:0">Cloud sync &amp; email reminders <span class="ln"></span></div>
+    <p class="hint">To get the automatic <b>email reminders</b>, connect this app to your GitHub repo. Your data is <b>encrypted with your passphrase</b> before it leaves your phone — even in a public repo nobody can read it. (Leave these empty to just use the app on this device.)</p>
+
+    <label class="f">GitHub repo (owner/name)</label>
+    <input id="sRepo" placeholder="Banbouk1234/myshishasy-instagram-poster" />
+    <label class="f">Access token (fine-grained PAT, Contents: read &amp; write)</label>
+    <input id="sToken" type="password" placeholder="github_pat_..." />
+    <label class="f">Encryption passphrase <span class="tag">(also add this as the VAULT_PASSPHRASE secret)</span></label>
+    <input id="sPass" type="password" placeholder="a secret phrase you & Sara share" />
+
+    <div class="banner" id="syncBanner"></div>
+
+    <div class="btnrow">
+      <button class="btn" id="btnPull">⬇ Load from cloud</button>
+      <button class="btn primary" id="btnPush">⬆ Save to cloud</button>
+    </div>
+
+    <div class="divider"></div>
+    <div class="btnrow">
+      <button class="btn" id="btnExport">Export backup</button>
+      <button class="btn" id="btnCloseSet">Done</button>
+    </div>
+    <p class="synced" id="syncState"></p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   Renewals — Dubai renewal reminder system (single-file app)
+   Storage: localStorage always; optional encrypted sync to a
+   GitHub repo (AES-256-GCM, PBKDF2-SHA256) so a daily GitHub
+   Action can read it and send email reminders.
+   ============================================================ */
+"use strict";
+
+const LS_KEY  = "renewals.vault.v1";
+const LS_CFG  = "renewals.config.v1";
+const VAULT_PATH = "renewals/data/vault.enc";
+
+/* ---- Dubai presets ------------------------------------------------ */
+const PRESETS = [
+  {key:"mulkiya",   label:"Mulkiya",        emoji:"🚗", cat:"vehicle",  recur:12, name:"Mulkiya (vehicle reg.)", note:"Need: valid insurance + pass inspection + clear all fines."},
+  {key:"carins",    label:"Car insurance",  emoji:"🛡️", cat:"vehicle",  recur:12, name:"Car insurance",          note:"Renew before Mulkiya — you can't register without it."},
+  {key:"license",   label:"Driving licence",emoji:"🪪", cat:"vehicle",  recur:120,name:"UAE driving licence",     note:"Eye test may be required. Renew via RTA / app."},
+  {key:"tradelic",  label:"Trade licence",  emoji:"🏢", cat:"company",  recur:12, name:"Trade licence",           note:"Need: valid Ejari/tenancy + no outstanding fees."},
+  {key:"estcard",   label:"Establishment card",emoji:"🗂️",cat:"company",recur:12, name:"Establishment card (immigration)",note:"Immigration card for the company. Renew with trade licence."},
+  {key:"ejari",     label:"Ejari",          emoji:"📃", cat:"company",  recur:12, name:"Ejari (office tenancy)",  note:"Registered tenancy contract — needed to renew the licence."},
+  {key:"vat",       label:"VAT return",     emoji:"🧾", cat:"company",  recur:3,  name:"VAT return filing",       note:"FTA filing + payment. Usually every quarter."},
+  {key:"emirates",  label:"Emirates ID",    emoji:"🆔", cat:"personal", recur:24, name:"Emirates ID",             note:"Renews with the residence visa."},
+  {key:"visa",      label:"Residence visa", emoji:"✈️", cat:"personal", recur:24, name:"Residence visa",          note:"Medical + Emirates ID typically part of renewal."},
+  {key:"passport",  label:"Passport",       emoji:"📕", cat:"personal", recur:120,name:"Passport",                note:"Renew ~6 months before expiry to avoid travel issues."},
+  {key:"health",    label:"Health insurance",emoji:"➕",cat:"personal", recur:12, name:"Health insurance",        note:"Mandatory in Dubai and tied to your visa."},
+  {key:"homeejari", label:"Home tenancy",   emoji:"🏠", cat:"home",     recur:12, name:"Home tenancy / Ejari",    note:"Renew Ejari + DEWA stays active. Give notice early if moving."},
+  {key:"salik",     label:"Salik",          emoji:"🅿️", cat:"vehicle",  recur:0,  name:"Salik top-up",            note:"Not an expiry — a low-balance reminder."},
+  {key:"custom",    label:"Something else", emoji:"➕", cat:"other",    recur:12, name:"", note:""},
+];
+const CAT_EMOJI = {vehicle:"🚗", company:"🏢", personal:"🪪", home:"🏠", other:"📄"};
+
+/* ---- State -------------------------------------------------------- */
+let vault = { version:1, people:[], items:[] };
+let cfg   = { repo:"", token:"", pass:"", lastSync:"" };
+let filterOwner = "all";
+let editingId = null;
+let editDays = [10,1,0];
+let selectedPreset = null;
+
+/* ---- Utilities ---------------------------------------------------- */
+const $ = s => document.querySelector(s);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const todayISO = () => new Date().toISOString().slice(0,10);
+function daysUntil(iso){
+  const d = new Date(iso+"T00:00:00");
+  const t = new Date(todayISO()+"T00:00:00");
+  return Math.round((d - t)/86400000);
+}
+function fmtDate(iso){
+  if(!iso) return "";
+  return new Date(iso+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
+}
+function toast(msg){
+  const t=$("#toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2200);
+}
+function addMonths(iso, m){
+  const d=new Date(iso+"T00:00:00"); d.setMonth(d.getMonth()+Number(m)); return d.toISOString().slice(0,10);
+}
+
+/* ---- Load / save (local) ----------------------------------------- */
+function load(){
+  try{ const v=JSON.parse(localStorage.getItem(LS_KEY)); if(v&&v.people) vault=v; }catch(e){}
+  try{ const c=JSON.parse(localStorage.getItem(LS_CFG)); if(c) cfg={...cfg,...c}; }catch(e){}
+  if(!vault.people.length){
+    vault.people = [
+      {id:"mohanad", name:"Mohanad", email:"mohanad@banbouk.com"},
+      {id:"sara",    name:"Sara 🍒", email:""},
+    ];
+  }
+}
+function save(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(vault)); }catch(e){}
+}
+function saveCfg(){
+  try{ localStorage.setItem(LS_CFG, JSON.stringify(cfg)); }catch(e){}
+}
+
+/* ---- Crypto (interops with reminders.py) -------------------------- */
+const enc = new TextEncoder(), dec = new TextDecoder();
+async function deriveKey(pass, salt){
+  const base = await crypto.subtle.importKey("raw", enc.encode(pass), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey(
+    {name:"PBKDF2", salt, iterations:200000, hash:"SHA-256"},
+    base, {name:"AES-GCM", length:256}, false, ["encrypt","decrypt"]);
+}
+function b64(bytes){ let s=""; bytes.forEach(b=>s+=String.fromCharCode(b)); return btoa(s); }
+function unb64(str){ return Uint8Array.from(atob(str.trim()), c=>c.charCodeAt(0)); }
+async function encryptVault(obj, pass){
+  const salt=crypto.getRandomValues(new Uint8Array(16));
+  const iv  =crypto.getRandomValues(new Uint8Array(12));
+  const key =await deriveKey(pass, salt);
+  const ct  =new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM", iv}, key, enc.encode(JSON.stringify(obj))));
+  const blob=new Uint8Array(salt.length+iv.length+ct.length);
+  blob.set(salt,0); blob.set(iv,16); blob.set(ct,28);
+  return b64(blob);
+}
+async function decryptVault(b64str, pass){
+  const blob=unb64(b64str);
+  const salt=blob.slice(0,16), iv=blob.slice(16,28), ct=blob.slice(28);
+  const key =await deriveKey(pass, salt);
+  const pt  =await crypto.subtle.decrypt({name:"AES-GCM", iv}, key, ct);
+  return JSON.parse(dec.decode(pt));
+}
+
+/* ---- GitHub sync -------------------------------------------------- */
+function ghHeaders(){ return {Authorization:"Bearer "+cfg.token, Accept:"application/vnd.github+json"}; }
+async function ghGet(){
+  const r=await fetch(`https://api.github.com/repos/${cfg.repo}/contents/${VAULT_PATH}`,{headers:ghHeaders()});
+  if(r.status===404) return {sha:null, content:null};
+  if(!r.ok) throw new Error("GitHub read failed ("+r.status+")");
+  const j=await r.json();
+  return {sha:j.sha, content:atob(j.content.replace(/\n/g,""))};
+}
+async function ghPut(contentStr, sha){
+  const body={message:"Update renewals vault", content:btoa(contentStr), sha:sha||undefined};
+  const r=await fetch(`https://api.github.com/repos/${cfg.repo}/contents/${VAULT_PATH}`,
+    {method:"PUT", headers:ghHeaders(), body:JSON.stringify(body)});
+  if(!r.ok) throw new Error("GitHub write failed ("+r.status+")");
+  return r.json();
+}
+function syncReady(){ return cfg.repo && cfg.token && cfg.pass; }
+
+async function pushCloud(silent){
+  if(!syncReady()){ if(!silent) toast("Fill repo, token & passphrase first"); return; }
+  try{
+    const cur=await ghGet();
+    const encStr=await encryptVault(vault, cfg.pass);
+    await ghPut(encStr, cur.sha);
+    cfg.lastSync=new Date().toISOString(); saveCfg(); renderSyncState();
+    if(!silent) toast("Saved to cloud ✓");
+  }catch(e){ if(!silent) toast("Sync error: "+e.message); }
+}
+async function pullCloud(silent){
+  if(!syncReady()){ if(!silent) toast("Fill repo, token & passphrase first"); return; }
+  try{
+    const cur=await ghGet();
+    if(!cur.content){ if(!silent) toast("Nothing in cloud yet — use Save"); return; }
+    const obj=await decryptVault(cur.content, cfg.pass);
+    if(obj&&obj.people){ vault=obj; save(); renderAll(); }
+    cfg.lastSync=new Date().toISOString(); saveCfg(); renderSyncState();
+    if(!silent) toast("Loaded from cloud ✓");
+  }catch(e){ if(!silent) toast("Load error: "+(e.message.includes("operation-specific")?"wrong passphrase?":e.message)); }
+}
+
+/* ---- Rendering ---------------------------------------------------- */
+function personById(id){ return vault.people.find(p=>p.id===id); }
+function ownerName(id){ const p=personById(id); return p?p.name:"—"; }
+
+function urgencyBadge(d, recur){
+  if(d<0)  return `<span class="badge b-red">Overdue ${-d}d</span>`;
+  if(d===0)return `<span class="badge b-red">Today</span>`;
+  if(d<=10)return `<span class="badge b-amber">${d} day${d>1?"s":""} left</span>`;
+  if(d<=30)return `<span class="badge b-blue">${d} days left</span>`;
+  return `<span class="badge b-green">${d} days</span>`;
+}
+
+function renderWho(){
+  const row=$("#whoRow"); row.innerHTML="";
+  const mk=(id,label)=>{ const c=document.createElement("div"); c.className="chip"+(filterOwner===id?" active":"");
+    c.textContent=label; c.onclick=()=>{filterOwner=id; renderAll();}; return c; };
+  row.appendChild(mk("all","Everyone"));
+  vault.people.forEach(p=>row.appendChild(mk(p.id,p.name)));
+}
+
+function visibleItems(){
+  let items=vault.items.filter(i=>i.status!=="archived");
+  if(filterOwner!=="all") items=items.filter(i=>i.ownerId===filterOwner);
+  return items.sort((a,b)=>daysUntil(a.expiry)-daysUntil(b.expiry));
+}
+
+function renderSummary(){
+  const items=visibleItems();
+  let soon=0, over=0, ok=0;
+  items.forEach(i=>{ const d=daysUntil(i.expiry); if(d<0)over++; else if(d<=10)soon++; else ok++; });
+  $("#summary").innerHTML=`
+    <div class="stat red"><b>${over}</b><span>Overdue</span></div>
+    <div class="stat amber"><b>${soon}</b><span>Due ≤10 days</span></div>
+    <div class="stat green"><b>${ok}</b><span>On track</span></div>`;
+}
+
+function renderList(){
+  const list=$("#list"); const items=visibleItems();
+  if(!items.length){
+    list.innerHTML=`<div class="empty">
+      <div class="big">🎉</div>
+      <p>No renewals yet. Add your first one — or quick-add a common Dubai item:</p>
+      <div class="quickadd" id="qaRow"></div></div>`;
+    const qa=$("#qaRow");
+    ["mulkiya","carins","tradelic","estcard","emirates","visa"].forEach(k=>{
+      const p=PRESETS.find(x=>x.key===k); const b=document.createElement("button");
+      b.className="qa"; b.innerHTML=`${p.emoji} ${p.label}`;
+      b.onclick=()=>openEdit(null,p); qa.appendChild(b);
+    });
+    return;
+  }
+  const groups=[
+    {t:"⚠️ Overdue", f:d=>d<0},
+    {t:"🔴 This week", f:d=>d>=0&&d<=10},
+    {t:"🔵 This month", f:d=>d>10&&d<=30},
+    {t:"🟢 Later", f:d=>d>30},
+  ];
+  let html="";
+  groups.forEach(g=>{
+    const gi=items.filter(i=>g.f(daysUntil(i.expiry)));
+    if(!gi.length) return;
+    html+=`<div class="section-h">${g.t}<span class="ln"></span></div>`;
+    gi.forEach(i=>{ html+=card(i); });
+  });
+  list.innerHTML=html;
+  list.querySelectorAll("[data-edit]").forEach(el=>el.onclick=()=>openEdit(el.getAttribute("data-edit")));
+  list.querySelectorAll("[data-renew]").forEach(el=>el.onclick=()=>markRenewed(el.getAttribute("data-renew")));
+}
+function card(i){
+  const d=daysUntil(i.expiry);
+  const emoji=CAT_EMOJI[i.category]||"📄";
+  return `<div class="card">
+    <div class="cat">${emoji}</div>
+    <div class="cbody">
+      <h3>${escapeHtml(i.title)}</h3>
+      <div class="cmeta">
+        <span class="owner-dot">👤 ${escapeHtml(ownerName(i.ownerId))}</span>
+        <span>📅 ${fmtDate(i.expiry)}</span>
+        ${urgencyBadge(d,i.recur)}
+      </div>
+      ${i.notes?`<div class="note">📝 ${escapeHtml(i.notes)}</div>`:""}
+    </div>
+    <div class="cactions">
+      <button class="mini go" data-renew="${i.id}">✓ Renewed</button>
+      <button class="mini" data-edit="${i.id}">Edit</button>
+    </div>
+  </div>`;
+}
+function escapeHtml(s){ return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+function renderSyncState(){
+  const el=$("#syncState");
+  if(!el) return;
+  if(cfg.lastSync) el.textContent="Last synced "+new Date(cfg.lastSync).toLocaleString();
+  else el.textContent = syncReady()? "Ready to sync." : "Local only (no email reminders yet).";
+}
+
+function renderAll(){ renderWho(); renderSummary(); renderList(); save(); }
+
+/* ---- Add / edit sheet -------------------------------------------- */
+function fillOwners(sel, val){
+  sel.innerHTML=""; vault.people.forEach(p=>{ const o=document.createElement("option");
+    o.value=p.id; o.textContent=p.name; sel.appendChild(o); });
+  if(val) sel.value=val;
+}
+function renderPresetGrid(){
+  const g=$("#presetGrid"); g.innerHTML="";
+  PRESETS.forEach(p=>{ const b=document.createElement("div");
+    b.className="preset"+(selectedPreset===p.key?" sel":"");
+    b.innerHTML=`<span class="e">${p.emoji}</span>${p.label}`;
+    b.onclick=()=>applyPreset(p); g.appendChild(b); });
+}
+function applyPreset(p){
+  selectedPreset=p.key; renderPresetGrid();
+  if(p.key!=="custom"){
+    if(!$("#fName").value || PRESETS.some(x=>x.name===$("#fName").value)) $("#fName").value=p.name;
+    $("#fCategory").value=p.cat;
+    $("#fRecur").value=String(p.recur);
+    if(p.note && !$("#fNotes").value) $("#fNotes").value=p.note;
+  }
+}
+function renderDays(){
+  const row=$("#daysRow"); row.innerHTML="";
+  [30,10,7,1,0].forEach(n=>{ const b=document.createElement("div");
+    b.className="day"+(editDays.includes(n)?" on":"");
+    b.textContent = n===0? "Same day" : n+"d";
+    b.onclick=()=>{ editDays=editDays.includes(n)?editDays.filter(x=>x!==n):[...editDays,n].sort((a,b)=>b-a); renderDays(); };
+    row.appendChild(b); });
+}
+function openEdit(id, preset){
+  editingId=id; selectedPreset=null;
+  fillOwners($("#fOwner"), filterOwner!=="all"?filterOwner:vault.people[0]?.id);
+  renderPresetGrid();
+  if(id){
+    const i=vault.items.find(x=>x.id===id);
+    $("#editTitle").textContent="Edit renewal";
+    $("#fName").value=i.title; $("#fOwner").value=i.ownerId; $("#fExpiry").value=i.expiry;
+    $("#fCategory").value=i.category; $("#fRecur").value=String(i.recur??12); $("#fNotes").value=i.notes||"";
+    editDays=[...(i.reminderDays||[10,1,0])]; $("#btnDelete").style.display="";
+  }else{
+    $("#editTitle").textContent="Add a renewal";
+    $("#fName").value=""; $("#fExpiry").value=""; $("#fCategory").value="vehicle";
+    $("#fRecur").value="12"; $("#fNotes").value=""; editDays=[10,1,0]; $("#btnDelete").style.display="none";
+    if(preset) applyPreset(preset);
+  }
+  renderDays();
+  $("#editScrim").classList.add("open");
+}
+function closeEdit(){ $("#editScrim").classList.remove("open"); }
+function saveEdit(){
+  const title=$("#fName").value.trim(); const expiry=$("#fExpiry").value;
+  if(!title){ toast("Give it a name"); return; }
+  if(!expiry){ toast("Pick the expiry date"); return; }
+  const data={ title, ownerId:$("#fOwner").value, expiry, category:$("#fCategory").value,
+    recur:Number($("#fRecur").value), reminderDays:[...editDays].sort((a,b)=>b-a), notes:$("#fNotes").value.trim() };
+  if(editingId){ const i=vault.items.find(x=>x.id===editingId); Object.assign(i,data); }
+  else{ vault.items.push({id:uid(), status:"active", createdAt:todayISO(), history:[], ...data}); }
+  closeEdit(); renderAll(); pushCloud(true); toast("Saved");
+}
+function markRenewed(id){
+  const i=vault.items.find(x=>x.id===id); if(!i) return;
+  const recur=Number(i.recur||0);
+  i.history=i.history||[]; i.history.push({renewedOn:todayISO(), wasExpiry:i.expiry});
+  if(recur>0){
+    // roll forward from the later of today or old expiry
+    let base=i.expiry; while(daysUntil(base)<0) base=addMonths(base,recur);
+    if(base===i.expiry) base=addMonths(i.expiry,recur);
+    i.expiry=base; toast("Renewed ✓ Next: "+fmtDate(i.expiry));
+  }else{
+    i.status="archived"; toast("Marked done ✓");
+  }
+  renderAll(); pushCloud(true);
+}
+
+/* ---- Settings sheet ---------------------------------------------- */
+function renderPeople(){
+  const box=$("#peopleEditor"); box.innerHTML="";
+  vault.people.forEach((p,idx)=>{
+    const d=document.createElement("div"); d.style.marginBottom="10px";
+    d.innerHTML=`<div class="row2">
+        <input value="${escapeHtml(p.name)}" data-pn="${idx}" placeholder="Name"/>
+        <input value="${escapeHtml(p.email||"")}" data-pe="${idx}" placeholder="email for reminders"/>
+      </div>`;
+    box.appendChild(d);
+  });
+  box.querySelectorAll("[data-pn]").forEach(el=>el.oninput=()=>{ vault.people[+el.dataset.pn].name=el.value; });
+  box.querySelectorAll("[data-pe]").forEach(el=>el.oninput=()=>{ vault.people[+el.dataset.pe].email=el.value.trim(); });
+}
+function openSettings(){
+  $("#sRepo").value=cfg.repo||""; $("#sToken").value=cfg.token||""; $("#sPass").value=cfg.pass||"";
+  renderPeople(); renderSyncState();
+  const b=$("#syncBanner");
+  b.className="banner"+(location.protocol==="blob:"||location.hostname.includes("claude")?" show":"");
+  if(b.classList.contains("show")) b.textContent="ℹ️ This is a live preview — cloud sync is disabled here. Deploy the app to your own GitHub Pages to enable it.";
+  $("#setScrim").classList.add("open");
+}
+function closeSettings(){
+  cfg.repo=$("#sRepo").value.trim(); cfg.token=$("#sToken").value.trim(); cfg.pass=$("#sPass").value;
+  saveCfg(); save(); renderAll(); $("#setScrim").classList.remove("open");
+}
+function exportBackup(){
+  const blob=new Blob([JSON.stringify(vault,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob); const a=document.createElement("a");
+  a.href=url; a.download="renewals-backup.json"; a.click(); URL.revokeObjectURL(url);
+}
+
+/* ---- Deep links from reminder emails (#renew=<id>) ---------------- */
+async function handleHash(){
+  const h=location.hash;
+  if(h.startsWith("#renew=")){
+    const id=h.slice(7); location.hash="";
+    if(syncReady()){ await pullCloud(true); }
+    if(vault.items.find(x=>x.id===id)) markRenewed(id);
+    else toast("That item was already updated");
+  }else if(h.startsWith("#snooze=")){
+    location.hash=""; toast("Okay — I'll remind you again tomorrow ⏰");
+  }
+}
+
+/* ---- Wire up ------------------------------------------------------ */
+function init(){
+  load();
+  $("#btnAdd").onclick=()=>openEdit(null);
+  $("#btnCancel").onclick=closeEdit;
+  $("#btnSave").onclick=saveEdit;
+  $("#btnDelete").onclick=()=>{ if(editingId && confirm("Delete this renewal?")){ vault.items=vault.items.filter(x=>x.id!==editingId); closeEdit(); renderAll(); pushCloud(true);} };
+  $("#btnSettings").onclick=openSettings;
+  $("#btnCloseSet").onclick=closeSettings;
+  $("#btnAddPerson").onclick=()=>{ vault.people.push({id:uid(),name:"New person",email:""}); renderPeople(); };
+  $("#btnExport").onclick=exportBackup;
+  $("#btnPush").onclick=()=>{ closeSettingsInputs(); pushCloud(false); };
+  $("#btnPull").onclick=()=>{ closeSettingsInputs(); pullCloud(false); };
+  [$("#editScrim"),$("#setScrim")].forEach(s=>s.onclick=e=>{ if(e.target===s) s.classList.remove("open"); });
+  renderAll();
+  handleHash();
+  window.addEventListener("hashchange", handleHash);
+  if(syncReady()) pullCloud(true);
+}
+function closeSettingsInputs(){
+  cfg.repo=$("#sRepo").value.trim(); cfg.token=$("#sToken").value.trim(); cfg.pass=$("#sPass").value; saveCfg();
+}
+init();
+</script>
+</body>
+</html>
